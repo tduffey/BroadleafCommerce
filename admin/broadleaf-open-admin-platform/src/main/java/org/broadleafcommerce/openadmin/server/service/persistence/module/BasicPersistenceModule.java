@@ -977,6 +977,7 @@ public class BasicPersistenceModule implements PersistenceModule, RecordHelper, 
                     );
                 filterMappings.add(filterMapping);
             }
+            filterMappings = manipulateFilterMappingsBeforeFetch(filterMappings, persistencePackage, cto);
             List<Serializable> records = getPersistentRecords(persistencePackage.getFetchTypeFullyQualifiedClassname(), filterMappings, cto.getFirstResult(), cto.getMaxResults());
             payload = getRecords(mergedProperties, records, null, null);
             totalRecords = getTotalRecords(persistencePackage.getFetchTypeFullyQualifiedClassname(), filterMappings);
@@ -1057,5 +1058,16 @@ public class BasicPersistenceModule implements PersistenceModule, RecordHelper, 
 
     public PersistenceManager getPersistenceManager() {
         return persistenceManager;
+    }
+
+    /**
+     * Opportunity for subclasses to adjust the filter mappings before a fetch is performed in the admin
+     *
+     * @param filterMappings The current restrictions on the fetch query
+     * @return the modified list of restrictions
+     */
+    protected List<FilterMapping> manipulateFilterMappingsBeforeFetch(List<FilterMapping> filterMappings,
+                                              PersistencePackage persistencePackage, CriteriaTransferObject cto) {
+        return filterMappings;
     }
 }

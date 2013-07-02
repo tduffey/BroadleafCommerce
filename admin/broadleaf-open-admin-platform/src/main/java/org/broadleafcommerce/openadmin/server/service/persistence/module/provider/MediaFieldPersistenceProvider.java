@@ -88,14 +88,20 @@ public class MediaFieldPersistenceProvider extends FieldPersistenceProviderAdapt
                     throw new IllegalArgumentException(e);
                 }
 
+                boolean persist = false;
                 if (media == null) {
                     media = (Media) valueType.newInstance();
+                    persist = true;
                 }
 
-                updateMediaFields(media, newMedia);
-                populateValueRequest.getPersistenceManager().getDynamicEntityDao().persist(media);
-                populateValueRequest.getFieldManager().setFieldValue(instance,
-                        populateValueRequest.getProperty().getName(), media);
+                if (!media.equals(newMedia)) {
+                    updateMediaFields(media, newMedia);
+                    if (persist) {
+                        populateValueRequest.getPersistenceManager().getDynamicEntityDao().persist(media);
+                    }
+                    populateValueRequest.getFieldManager().setFieldValue(instance,
+                            populateValueRequest.getProperty().getName(), media);
+                }
             } else {
                 throw new UnsupportedOperationException("MediaFields only work with Media types.");
             }

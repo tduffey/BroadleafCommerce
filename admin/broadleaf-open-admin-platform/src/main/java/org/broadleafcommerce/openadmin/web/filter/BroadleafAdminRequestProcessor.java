@@ -20,19 +20,29 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadleafcommerce.common.exception.SiteNotFoundException;
 import org.broadleafcommerce.common.locale.domain.Locale;
+import org.broadleafcommerce.common.sandbox.domain.SandBox;
 import org.broadleafcommerce.common.site.domain.Site;
 import org.broadleafcommerce.common.web.AbstractBroadleafWebRequestProcessor;
 import org.broadleafcommerce.common.web.BroadleafLocaleResolver;
 import org.broadleafcommerce.common.web.BroadleafRequestContext;
+import org.broadleafcommerce.common.web.BroadleafSandBoxResolver;
 import org.broadleafcommerce.common.web.BroadleafSiteResolver;
 import org.broadleafcommerce.common.web.BroadleafTimeZoneResolver;
+import org.broadleafcommerce.common.web.SandBoxContext;
+import org.broadleafcommerce.openadmin.security.AdminSandBoxContext;
+import org.broadleafcommerce.openadmin.server.security.domain.AdminUser;
+import org.broadleafcommerce.openadmin.server.security.remote.SecurityVerifier;
+import org.broadleafcommerce.openadmin.server.service.SandBoxMode;
+import org.broadleafcommerce.openadmin.server.service.persistence.SandBoxService;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 
-import java.util.TimeZone;
-
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+import java.util.TimeZone;
 
 
 /**
@@ -57,6 +67,12 @@ public class BroadleafAdminRequestProcessor extends AbstractBroadleafWebRequestP
     @Resource(name = "blAdminTimeZoneResolver")
     protected BroadleafTimeZoneResolver broadleafTimeZoneResolver;
 
+    @Resource(name="blSandBoxService")
+    protected SandBoxService sandBoxService;
+
+    @Resource(name="blAdminSecurityRemoteService")
+    protected SecurityVerifier adminRemoteSecurityService;
+
     @Override
     public void process(WebRequest request) throws SiteNotFoundException {
         Site site = siteResolver.resolveSite(request);
@@ -75,6 +91,16 @@ public class BroadleafAdminRequestProcessor extends AbstractBroadleafWebRequestP
         
         TimeZone timeZone = broadleafTimeZoneResolver.resolveTimeZone(request);
         brc.setTimeZone(timeZone);
+
+        AdminUser adminUser = adminRemoteSecurityService.getPersistentAdminUser();
+        if (adminUser == null) {
+            //clear any sandbox
+            request.removeAttribute(BroadleafSandBoxResolver.SANDBOX_ID_VAR, WebRequest.SCOPE_GLOBAL_SESSION);
+        } else {
+            SandBox sandBox = sandBoxService.retrieveUserSandBox(null, adminUser);
+            request.setAttribute(BroadleafSandBoxResolver.SANDBOX_ID_VAR, sandBox.getId(), WebRequest.SCOPE_GLOBAL_SESSION);
+            brc.setSandbox(sandBox);
+        }
     }
 
 }

@@ -133,6 +133,11 @@ public class DynamicEntityDaoImpl implements DynamicEntityDao {
         standardEntityManager.flush();
         return entity;
     }
+
+    @Override
+    public Object find(Class<?> entityClass, Object key) {
+        return standardEntityManager.find(entityClass, key);
+    }
     
     @Override
     public Serializable merge(Serializable entity) {

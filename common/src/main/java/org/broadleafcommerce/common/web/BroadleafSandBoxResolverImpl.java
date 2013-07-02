@@ -59,7 +59,6 @@ public class BroadleafSandBoxResolverImpl implements BroadleafSandBoxResolver  {
     protected Boolean sandBoxPreviewEnabled = true;
     
     // Request Parameters and Attributes for Sandbox Mode properties - mostly values to manage dates.
-    private static String SANDBOX_ID_VAR = "blSandboxId";
     private static String SANDBOX_DATE_TIME_VAR = "blSandboxDateTime";
     private static final SimpleDateFormat CONTENT_DATE_FORMATTER = new SimpleDateFormat("yyyyMMddHHmm");
     private static final SimpleDateFormat CONTENT_DATE_DISPLAY_FORMATTER = new SimpleDateFormat("MM/dd/yyyy");

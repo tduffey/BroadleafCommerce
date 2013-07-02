@@ -22,12 +22,16 @@ import org.broadleafcommerce.common.presentation.AdminPresentationClass;
 import org.broadleafcommerce.common.presentation.client.VisibilityEnum;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Parameter;
 import org.hibernate.annotations.Polymorphism;
 import org.hibernate.annotations.PolymorphismType;
 
 import javax.persistence.Column;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.Table;
@@ -58,6 +62,19 @@ public class CategoryProductXrefImpl implements CategoryProductXref {
 
     /** The Constant serialVersionUID. */
     private static final long serialVersionUID = 1L;
+
+    @Id
+    @GeneratedValue(generator= "CategoryProductId")
+    @GenericGenerator(
+        name="CategoryProductId",
+        strategy="org.broadleafcommerce.common.persistence.IdOverrideTableGenerator",
+        parameters = {
+            @Parameter(name="segment_value", value="CategoryProductXrefImpl"),
+            @Parameter(name="entity_name", value="org.broadleafcommerce.core.catalog.domain.CategoryProductXrefImpl")
+        }
+    )
+    @Column(name = "CATEGORY_PRODUCT_ID")
+    protected Long id;
 
     @EmbeddedId
     CategoryProductXrefPK categoryProductXref = new CategoryProductXrefPK();

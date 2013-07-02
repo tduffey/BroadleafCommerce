@@ -523,6 +523,7 @@ public class MapStructurePersistenceModule extends BasicPersistenceModule {
 
             List<FilterMapping> filterMappings = getFilterMappings(persistencePerspective, cto, persistencePackage
                     .getFetchTypeFullyQualifiedClassname(), mergedProperties);
+            filterMappings = manipulateFilterMappingsBeforeFetch(filterMappings, persistencePackage, cto);
             totalRecords = getTotalRecords(persistencePackage.getFetchTypeFullyQualifiedClassname(), filterMappings);
             if (totalRecords > 1) {
                 throw new ServiceException("Queries to retrieve an entity containing a MapStructure must return only 1 entity. Your query returned ("+totalRecords+") values.");
