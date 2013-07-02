@@ -224,42 +224,42 @@ public class CategoryImpl implements Category, Status, AdminMainEntity {
     @AdminPresentationToOneLookup()
     protected Category defaultParentCategory;
 
-    @OneToMany(targetEntity = CategoryXrefImpl.class, mappedBy = "categoryXrefPK.category")
+    @OneToMany(targetEntity = CategoryXrefImpl.class, mappedBy = "category")
     @Cascade(value={org.hibernate.annotations.CascadeType.MERGE, org.hibernate.annotations.CascadeType.PERSIST})
     @OrderBy(value="displayOrder")
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region="blStandardElements")
     @BatchSize(size = 50)
     @AdminPresentationAdornedTargetCollection(
-            targetObjectProperty = "categoryXrefPK.subCategory",
-            parentObjectProperty = "categoryXrefPK.category",
+            targetObjectProperty = "subCategory",
+            parentObjectProperty = "category",
             friendlyName = "allChildCategoriesTitle",
             sortProperty = "displayOrder",
             tab = Presentation.Tab.Name.Advanced, tabOrder = Presentation.Tab.Order.Advanced,
             gridVisibleFields = { "name" })
     protected List<CategoryXref> allChildCategoryXrefs = new ArrayList<CategoryXref>(10);
 
-    @OneToMany(targetEntity = CategoryXrefImpl.class, mappedBy = "categoryXrefPK.subCategory")
+    @OneToMany(targetEntity = CategoryXrefImpl.class, mappedBy = "subCategory")
     @Cascade(value={org.hibernate.annotations.CascadeType.MERGE, org.hibernate.annotations.CascadeType.PERSIST})
     @OrderBy(value="displayOrder")
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region="blStandardElements")
     @BatchSize(size = 50)
     @AdminPresentationAdornedTargetCollection(
-            targetObjectProperty = "categoryXrefPK.category",
-            parentObjectProperty = "categoryXrefPK.subCategory",
+            targetObjectProperty = "category",
+            parentObjectProperty = "subCategory",
             friendlyName = "allParentCategoriesTitle",
             sortProperty = "displayOrder",
             tab = Presentation.Tab.Name.Advanced, tabOrder = Presentation.Tab.Order.Advanced,
             gridVisibleFields = { "name" })
     protected List<CategoryXref> allParentCategoryXrefs = new ArrayList<CategoryXref>(10);
 
-    @OneToMany(targetEntity = CategoryProductXrefImpl.class, mappedBy = "categoryProductXref.category")
+    @OneToMany(targetEntity = CategoryProductXrefImpl.class, mappedBy = "category")
     @Cascade(value={org.hibernate.annotations.CascadeType.MERGE, org.hibernate.annotations.CascadeType.PERSIST})
     @OrderBy(value="displayOrder")
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region="blStandardElements")
     @BatchSize(size = 50)
     @AdminPresentationAdornedTargetCollection(
-            targetObjectProperty = "categoryProductXref.product",
-            parentObjectProperty = "categoryProductXref.category",
+            targetObjectProperty = "product",
+            parentObjectProperty = "category",
             friendlyName = "allProductsTitle",
             sortProperty = "displayOrder",
             tab = Presentation.Tab.Name.Products, tabOrder = Presentation.Tab.Order.Products,

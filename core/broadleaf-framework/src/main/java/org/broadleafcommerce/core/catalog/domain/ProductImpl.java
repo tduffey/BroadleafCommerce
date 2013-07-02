@@ -224,7 +224,7 @@ public class ProductImpl implements Product, Status, AdminMainEntity {
     @AdminPresentationToOneLookup()
     protected Category defaultCategory;
 
-    @OneToMany(targetEntity = CategoryProductXrefImpl.class, mappedBy = "categoryProductXref.product")
+    @OneToMany(targetEntity = CategoryProductXrefImpl.class, mappedBy = "product")
     @Cascade(value={org.hibernate.annotations.CascadeType.MERGE, org.hibernate.annotations.CascadeType.PERSIST})
     @OrderBy(value="displayOrder")
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region="blStandardElements")
@@ -232,8 +232,8 @@ public class ProductImpl implements Product, Status, AdminMainEntity {
     @AdminPresentationAdornedTargetCollection(friendlyName = "allParentCategoriesTitle", order = 3000,
         tab = Presentation.Tab.Name.Marketing, tabOrder = Presentation.Tab.Order.Marketing,
         joinEntityClass = "org.broadleafcommerce.core.catalog.domain.CategoryProductXrefImpl",
-        targetObjectProperty = "categoryProductXref.category",
-        parentObjectProperty = "categoryProductXref.product",
+        targetObjectProperty = "category",
+        parentObjectProperty = "product",
         sortProperty = "displayOrder",
         gridVisibleFields = { "name" })
     protected List<CategoryProductXref> allParentCategoryXrefs = new ArrayList<CategoryProductXref>();

@@ -34,6 +34,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 /**
@@ -76,83 +78,73 @@ public class CategoryProductXrefImpl implements CategoryProductXref {
     @Column(name = "CATEGORY_PRODUCT_ID")
     protected Long id;
 
-    @EmbeddedId
-    CategoryProductXrefPK categoryProductXref = new CategoryProductXrefPK();
+    @ManyToOne(targetEntity = CategoryImpl.class, optional=false)
+    @JoinColumn(name = "CATEGORY_ID")
+    protected Category category = new CategoryImpl();
 
-    public CategoryProductXrefPK getCategoryProductXref() {
-        return categoryProductXref;
-    }
-
-    public void setCategoryProductXref(CategoryProductXrefPK categoryProductXref) {
-        this.categoryProductXref = categoryProductXref;
-    }
+    /** The product. */
+    @ManyToOne(targetEntity = ProductImpl.class, optional=false)
+    @JoinColumn(name = "PRODUCT_ID")
+    protected Product product = new ProductImpl();
 
     /** The display order. */
     @Column(name = "DISPLAY_ORDER")
     @AdminPresentation(visibility = VisibilityEnum.HIDDEN_ALL)
     protected Long displayOrder;
 
-    /* (non-Javadoc)
-     * @see org.broadleafcommerce.core.catalog.domain.CategoryProductXref#getDisplayOrder()
-     */
     public Long getDisplayOrder() {
         return displayOrder;
     }
 
-    /* (non-Javadoc)
-     * @see org.broadleafcommerce.core.catalog.domain.CategoryProductXref#setDisplayOrder(java.lang.Integer)
-     */
     public void setDisplayOrder(Long displayOrder) {
         this.displayOrder = displayOrder;
     }
 
-    /**
-     * @return
-     * @see org.broadleafcommerce.core.catalog.domain.CategoryProductXrefImpl.CategoryProductXrefPK#getCategory()
-     */
     public Category getCategory() {
-        return categoryProductXref.getCategory();
+        return category;
     }
 
-    /**
-     * @param category
-     * @see org.broadleafcommerce.core.catalog.domain.CategoryProductXrefImpl.CategoryProductXrefPK#setCategory(org.broadleafcommerce.core.catalog.domain.Category)
-     */
     public void setCategory(Category category) {
-        categoryProductXref.setCategory(category);
+        this.category = category;
     }
 
-    /**
-     * @return
-     * @see org.broadleafcommerce.core.catalog.domain.CategoryProductXrefImpl.CategoryProductXrefPK#getProduct()
-     */
     public Product getProduct() {
-        return categoryProductXref.getProduct();
+        return product;
     }
 
-    /**
-     * @param product
-     * @see org.broadleafcommerce.core.catalog.domain.CategoryProductXrefImpl.CategoryProductXrefPK#setProduct(org.broadleafcommerce.core.catalog.domain.Product)
-     */
     public void setProduct(Product product) {
-        categoryProductXref.setProduct(product);
+        this.product = product;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     @Override
     public boolean equals(Object o) {
-        if (o instanceof CategoryProductXrefImpl) {
-            CategoryProductXrefImpl that = (CategoryProductXrefImpl) o;
-            return new EqualsBuilder()
-                .append(categoryProductXref, that.categoryProductXref)
-                .build();
-        }
-        return false;
+        if (this == o) return true;
+        if (!(o instanceof CategoryProductXrefImpl)) return false;
+
+        CategoryProductXrefImpl that = (CategoryProductXrefImpl) o;
+
+        if (category != null ? !category.equals(that.category) : that.category != null) return false;
+        if (displayOrder != null ? !displayOrder.equals(that.displayOrder) : that.displayOrder != null) return false;
+        if (id != null ? !id.equals(that.id) : that.id != null) return false;
+        if (product != null ? !product.equals(that.product) : that.product != null) return false;
+
+        return true;
     }
 
     @Override
     public int hashCode() {
-        int result = categoryProductXref != null ? categoryProductXref.hashCode() : 0;
+        int result = id != null ? id.hashCode() : 0;
+        result = 31 * result + (category != null ? category.hashCode() : 0);
+        result = 31 * result + (product != null ? product.hashCode() : 0);
+        result = 31 * result + (displayOrder != null ? displayOrder.hashCode() : 0);
         return result;
     }
-
 }

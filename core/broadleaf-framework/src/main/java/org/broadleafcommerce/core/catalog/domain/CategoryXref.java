@@ -31,5 +31,9 @@ public interface CategoryXref extends Serializable {
     public Category getSubCategory();
 
     public void setSubCategory(final Category subCategory);
+
+    public void setId(Long id);
+
+    public Long getId();
     
 }
