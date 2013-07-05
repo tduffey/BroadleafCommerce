@@ -16,6 +16,7 @@
 
 package org.broadleafcommerce.openadmin.server.service.persistence;
 
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -48,6 +49,9 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
+import javax.persistence.EntityManager;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -56,10 +60,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
-import javax.persistence.EntityManager;
 
 @Component("blPersistenceManager")
 @Scope("prototype")
@@ -85,6 +85,9 @@ public class PersistenceManagerImpl implements InspectHelper, PersistenceManager
     @Resource(name="blPersistenceModules")
     protected PersistenceModule[] modules;
 
+    @Resource(name="blPersistenceManagerEventHandlers")
+    protected List<PersistenceManagerEventHandler> persistenceManagerEventHandlers;
+
     protected TargetModeType targetMode;
     protected ApplicationContext applicationContext;
 
@@ -93,11 +96,13 @@ public class PersistenceManagerImpl implements InspectHelper, PersistenceManager
         for (PersistenceModule module : modules) {
             module.setPersistenceManager(this);
         }
+        Collections.sort(persistenceManagerEventHandlers, new Comparator<PersistenceManagerEventHandler>() {
+                    @Override
+                    public int compare(PersistenceManagerEventHandler o1, PersistenceManagerEventHandler o2) {
+                return Integer.valueOf(o1.getOrder()).compareTo(Integer.valueOf(o2.getOrder()));
+            }
+        });
     }
-
-//  public void close() throws Exception {
-//        //do nothing
-//  }
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
@@ -217,7 +222,13 @@ public class PersistenceManagerImpl implements InspectHelper, PersistenceManager
     }
 
     @Override
-    public DynamicResultSet inspect(PersistencePackage persistencePackage) throws ServiceException, ClassNotFoundException {
+    public PersistenceResponse inspect(PersistencePackage persistencePackage) throws ServiceException, ClassNotFoundException {
+        for (PersistenceManagerEventHandler handler : persistenceManagerEventHandlers) {
+            PersistenceManagerEventHandlerResponse response = handler.preInspect(this, persistencePackage);
+            if (PersistenceManagerEventHandlerResponse.PersistenceManagerEventHandlerResponseStatus.HANDLED_BREAK==response.getStatus()) {
+                break;
+            }
+        }
         // check to see if there is a custom handler registered
         for (CustomPersistenceHandler handler : getCustomPersistenceHandlers()) {
             if (handler.canHandleInspect(persistencePackage)) {
@@ -225,8 +236,8 @@ public class PersistenceManagerImpl implements InspectHelper, PersistenceManager
                     adminRemoteSecurityService.securityCheck(persistencePackage.getCeilingEntityFullyQualifiedClassname(), EntityOperationType.INSPECT);
                 }
                 DynamicResultSet results = handler.inspect(persistencePackage, dynamicEntityDao, this);
-
-                return results;
+                return executePostInspectHandlers(persistencePackage, new PersistenceResponse().withDynamicResultSet
+                        (results));
             }
         }
 
@@ -237,14 +248,39 @@ public class PersistenceManagerImpl implements InspectHelper, PersistenceManager
             module.updateMergedProperties(persistencePackage, allMergedProperties);
         }
         ClassMetadata mergedMetadata = getMergedClassMetadata(entities, allMergedProperties);
-
         DynamicResultSet results = new DynamicResultSet(mergedMetadata);
 
-        return results;
+        return executePostInspectHandlers(persistencePackage, new PersistenceResponse().withDynamicResultSet(results));
+    }
+
+    protected PersistenceResponse executePostInspectHandlers(PersistencePackage persistencePackage,
+                                                             PersistenceResponse persistenceResponse) throws ServiceException {
+        for (PersistenceManagerEventHandler handler : persistenceManagerEventHandlers) {
+            PersistenceManagerEventHandlerResponse response = handler.postInspect(this, persistenceResponse.getDynamicResultSet(), persistencePackage);
+            if (PersistenceManagerEventHandlerResponse.PersistenceManagerEventHandlerResponseStatus.HANDLED_BREAK==response.getStatus()) {
+                persistenceResponse.setDynamicResultSet(response.getDynamicResultSet());
+                if (!MapUtils.isEmpty(response.getAdditionalData())) {
+                    persistenceResponse.getAdditionalData().putAll(response.getAdditionalData());
+                }
+                break;
+            } else if (PersistenceManagerEventHandlerResponse.PersistenceManagerEventHandlerResponseStatus.HANDLED==response.getStatus()) {
+                persistenceResponse.setDynamicResultSet(response.getDynamicResultSet());
+                if (!MapUtils.isEmpty(response.getAdditionalData())) {
+                    persistenceResponse.getAdditionalData().putAll(response.getAdditionalData());
+                }
+            }
+        }
+        return persistenceResponse;
     }
 
     @Override
-    public DynamicResultSet fetch(PersistencePackage persistencePackage, CriteriaTransferObject cto) throws ServiceException {
+    public PersistenceResponse fetch(PersistencePackage persistencePackage, CriteriaTransferObject cto) throws ServiceException {
+        for (PersistenceManagerEventHandler handler : persistenceManagerEventHandlers) {
+            PersistenceManagerEventHandlerResponse response = handler.preFetch(this, persistencePackage, cto);
+            if (PersistenceManagerEventHandlerResponse.PersistenceManagerEventHandlerResponseStatus.HANDLED_BREAK==response.getStatus()) {
+                break;
+            }
+        }
         //check to see if there is a custom handler registered
         for (CustomPersistenceHandler handler : getCustomPersistenceHandlers()) {
             if (handler.canHandleFetch(persistencePackage)) {
@@ -252,25 +288,66 @@ public class PersistenceManagerImpl implements InspectHelper, PersistenceManager
                     adminRemoteSecurityService.securityCheck(persistencePackage.getCeilingEntityFullyQualifiedClassname(), EntityOperationType.FETCH);
                 }
                 DynamicResultSet results = handler.fetch(persistencePackage, cto, dynamicEntityDao, (RecordHelper) getCompatibleModule(OperationType.BASIC));
-                return postFetch(results, persistencePackage, cto);
+                return executePostFetchHandlers(persistencePackage, cto, new PersistenceResponse().withDynamicResultSet(results));
             }
         }
         adminRemoteSecurityService.securityCheck(persistencePackage.getCeilingEntityFullyQualifiedClassname(), EntityOperationType.FETCH);
         PersistenceModule myModule = getCompatibleModule(persistencePackage.getPersistencePerspective().getOperationTypes().getFetchType());
-        return postFetch(myModule.fetch(persistencePackage, cto), persistencePackage, cto);
+        DynamicResultSet results = myModule.fetch(persistencePackage, cto);
+        results.setStartIndex(cto.getFirstResult());
+        results.setPageSize(cto.getMaxResults());
+
+        return executePostFetchHandlers(persistencePackage, cto, new PersistenceResponse().withDynamicResultSet(results));
     }
 
+    protected PersistenceResponse executePostFetchHandlers(PersistencePackage persistencePackage, CriteriaTransferObject
+            cto, PersistenceResponse persistenceResponse) throws ServiceException {
+        for (PersistenceManagerEventHandler handler : persistenceManagerEventHandlers) {
+            PersistenceManagerEventHandlerResponse response = handler.postFetch(this, persistenceResponse.getDynamicResultSet(), persistencePackage, cto);
+            if (PersistenceManagerEventHandlerResponse.PersistenceManagerEventHandlerResponseStatus.HANDLED_BREAK==response.getStatus()) {
+                persistenceResponse.setDynamicResultSet(response.getDynamicResultSet());
+                if (!MapUtils.isEmpty(response.getAdditionalData())) {
+                    persistenceResponse.getAdditionalData().putAll(response.getAdditionalData());
+                }
+                break;
+            } else if (PersistenceManagerEventHandlerResponse.PersistenceManagerEventHandlerResponseStatus.HANDLED==response.getStatus()) {
+                persistenceResponse.setDynamicResultSet(response.getDynamicResultSet());
+                if (!MapUtils.isEmpty(response.getAdditionalData())) {
+                    persistenceResponse.getAdditionalData().putAll(response.getAdditionalData());
+                }
+            }
+        }
+        //support legacy api
+        persistenceResponse.setDynamicResultSet(postFetch(persistenceResponse.getDynamicResultSet(), persistencePackage, cto));
+
+        return persistenceResponse;
+    }
+
+    /**
+     * Called after the fetch event
+     *
+     * @param resultSet
+     * @param persistencePackage
+     * @param cto
+     * @return the modified result set
+     * @throws ServiceException
+     * @deprecated use the PersistenceManagerEventHandler api instead
+     */
+    @Deprecated
     protected DynamicResultSet postFetch(DynamicResultSet resultSet, PersistencePackage persistencePackage, 
             CriteriaTransferObject cto)
             throws ServiceException {
-        // Expose the start index so that we can utilize when building the UI
-        resultSet.setStartIndex(cto.getFirstResult());
-        resultSet.setPageSize(cto.getMaxResults());
         return resultSet;
     }
 
     @Override
-    public Entity add(PersistencePackage persistencePackage) throws ServiceException {
+    public PersistenceResponse add(PersistencePackage persistencePackage) throws ServiceException {
+        for (PersistenceManagerEventHandler handler : persistenceManagerEventHandlers) {
+            PersistenceManagerEventHandlerResponse response = handler.preAdd(this, persistencePackage);
+            if (PersistenceManagerEventHandlerResponse.PersistenceManagerEventHandlerResponseStatus.HANDLED_BREAK==response.getStatus()) {
+                break;
+            }
+        }
         //check to see if there is a custom handler registered
         for (CustomPersistenceHandler handler : getCustomPersistenceHandlers()) {
             if (handler.canHandleAdd(persistencePackage)) {
@@ -278,22 +355,61 @@ public class PersistenceManagerImpl implements InspectHelper, PersistenceManager
                     adminRemoteSecurityService.securityCheck(persistencePackage.getCeilingEntityFullyQualifiedClassname(), EntityOperationType.ADD);
                 }
                 Entity response = handler.add(persistencePackage, dynamicEntityDao, (RecordHelper) getCompatibleModule(OperationType.BASIC));
-                return postAdd(response, persistencePackage);
+                return executePostAddHandlers(persistencePackage, new PersistenceResponse().withEntity(response));
             }
         }
         adminRemoteSecurityService.securityCheck(persistencePackage.getCeilingEntityFullyQualifiedClassname(), EntityOperationType.ADD);
         PersistenceModule myModule = getCompatibleModule(persistencePackage.getPersistencePerspective().getOperationTypes().getAddType());
-        Entity response = myModule.add(persistencePackage);
-        return postAdd(response, persistencePackage);
+        Entity entity = myModule.add(persistencePackage);
+
+        return executePostAddHandlers(persistencePackage, new PersistenceResponse().withEntity(entity));
     }
 
+    protected PersistenceResponse executePostAddHandlers(PersistencePackage persistencePackage, PersistenceResponse persistenceResponse) throws ServiceException {
+        for (PersistenceManagerEventHandler handler : persistenceManagerEventHandlers) {
+            PersistenceManagerEventHandlerResponse response = handler.postAdd(this, persistenceResponse.getEntity(), persistencePackage);
+            if (PersistenceManagerEventHandlerResponse.PersistenceManagerEventHandlerResponseStatus.HANDLED_BREAK==response.getStatus()) {
+                persistenceResponse.setEntity(response.getEntity());
+                if (!MapUtils.isEmpty(response.getAdditionalData())) {
+                    persistenceResponse.getAdditionalData().putAll(response.getAdditionalData());
+                }
+                break;
+            } else if (PersistenceManagerEventHandlerResponse.PersistenceManagerEventHandlerResponseStatus.HANDLED==response.getStatus()) {
+                persistenceResponse.setEntity(response.getEntity());
+                if (!MapUtils.isEmpty(response.getAdditionalData())) {
+                    persistenceResponse.getAdditionalData().putAll(response.getAdditionalData());
+                }
+            }
+        }
+        //support legacy api
+        persistenceResponse.setEntity(postAdd(persistenceResponse.getEntity(), persistencePackage));
+
+        return persistenceResponse;
+    }
+
+    /**
+     * Called after the add event
+     *
+     * @param entity
+     * @param persistencePackage
+     * @return the modified Entity instance
+     * @throws ServiceException
+     * @deprecated use the PersistenceManagerEventHandler api instead
+     */
+    @Deprecated
     protected Entity postAdd(Entity entity, PersistencePackage persistencePackage) throws ServiceException {
         //do nothing
         return entity;
     }
 
     @Override
-    public Entity update(PersistencePackage persistencePackage) throws ServiceException {
+    public PersistenceResponse update(PersistencePackage persistencePackage) throws ServiceException {
+        for (PersistenceManagerEventHandler handler : persistenceManagerEventHandlers) {
+            PersistenceManagerEventHandlerResponse response = handler.preUpdate(this, persistencePackage);
+            if (PersistenceManagerEventHandlerResponse.PersistenceManagerEventHandlerResponseStatus.HANDLED_BREAK==response.getStatus()) {
+                break;
+            }
+        }
         //check to see if there is a custom handler registered
         for (CustomPersistenceHandler handler : getCustomPersistenceHandlers()) {
             if (handler.canHandleUpdate(persistencePackage)) {
@@ -301,22 +417,61 @@ public class PersistenceManagerImpl implements InspectHelper, PersistenceManager
                     adminRemoteSecurityService.securityCheck(persistencePackage.getCeilingEntityFullyQualifiedClassname(), EntityOperationType.UPDATE);
                 }
                 Entity response = handler.update(persistencePackage, dynamicEntityDao, (RecordHelper) getCompatibleModule(OperationType.BASIC));
-                return postUpdate(response, persistencePackage);
+                return executePostUpdateHandlers(persistencePackage, new PersistenceResponse().withEntity(response));
             }
         }
         adminRemoteSecurityService.securityCheck(persistencePackage.getCeilingEntityFullyQualifiedClassname(), EntityOperationType.UPDATE);
         PersistenceModule myModule = getCompatibleModule(persistencePackage.getPersistencePerspective().getOperationTypes().getUpdateType());
-        Entity response = myModule.update(persistencePackage);
-        return postUpdate(response, persistencePackage);
+        Entity entity = myModule.update(persistencePackage);
+
+        return executePostUpdateHandlers(persistencePackage, new PersistenceResponse().withEntity(entity));
     }
 
+    protected PersistenceResponse executePostUpdateHandlers(PersistencePackage persistencePackage, PersistenceResponse persistenceResponse) throws ServiceException {
+        for (PersistenceManagerEventHandler handler : persistenceManagerEventHandlers) {
+            PersistenceManagerEventHandlerResponse response = handler.postUpdate(this, persistenceResponse.getEntity(), persistencePackage);
+            if (PersistenceManagerEventHandlerResponse.PersistenceManagerEventHandlerResponseStatus.HANDLED_BREAK==response.getStatus()) {
+                persistenceResponse.setEntity(response.getEntity());
+                if (!MapUtils.isEmpty(response.getAdditionalData())) {
+                    persistenceResponse.getAdditionalData().putAll(response.getAdditionalData());
+                }
+                break;
+            } else if (PersistenceManagerEventHandlerResponse.PersistenceManagerEventHandlerResponseStatus.HANDLED==response.getStatus()) {
+                persistenceResponse.setEntity(response.getEntity());
+                if (!MapUtils.isEmpty(response.getAdditionalData())) {
+                    persistenceResponse.getAdditionalData().putAll(response.getAdditionalData());
+                }
+            }
+        }
+        //support legacy api
+        persistenceResponse.setEntity(postUpdate(persistenceResponse.getEntity(), persistencePackage));
+
+        return persistenceResponse;
+    }
+
+    /**
+     * Called after the update event
+     *
+     * @param entity
+     * @param persistencePackage
+     * @return the modified Entity instance
+     * @throws ServiceException
+     * @deprecated use the PersistenceManagerEventHandler api instead
+     */
+    @Deprecated
     protected Entity postUpdate(Entity entity, PersistencePackage persistencePackage) throws ServiceException {
         //do nothing
         return entity;
     }
 
     @Override
-    public void remove(PersistencePackage persistencePackage) throws ServiceException {
+    public PersistenceResponse remove(PersistencePackage persistencePackage) throws ServiceException {
+        for (PersistenceManagerEventHandler handler : persistenceManagerEventHandlers) {
+            PersistenceManagerEventHandlerResponse response = handler.preRemove(this, persistencePackage);
+            if (PersistenceManagerEventHandlerResponse.PersistenceManagerEventHandlerResponseStatus.HANDLED_BREAK==response.getStatus()) {
+                break;
+            }
+        }
         //check to see if there is a custom handler registered
         for (CustomPersistenceHandler handler : getCustomPersistenceHandlers()) {
             if (handler.canHandleRemove(persistencePackage)) {
@@ -324,12 +479,32 @@ public class PersistenceManagerImpl implements InspectHelper, PersistenceManager
                     adminRemoteSecurityService.securityCheck(persistencePackage.getCeilingEntityFullyQualifiedClassname(), EntityOperationType.REMOVE);
                 }
                 handler.remove(persistencePackage, dynamicEntityDao, (RecordHelper) getCompatibleModule(OperationType.BASIC));
-                return;
+                return executePostRemoveHandlers(persistencePackage, new PersistenceResponse());
             }
         }
         adminRemoteSecurityService.securityCheck(persistencePackage.getCeilingEntityFullyQualifiedClassname(), EntityOperationType.REMOVE);
         PersistenceModule myModule = getCompatibleModule(persistencePackage.getPersistencePerspective().getOperationTypes().getRemoveType());
         myModule.remove(persistencePackage);
+
+        return executePostRemoveHandlers(persistencePackage, new PersistenceResponse());
+    }
+
+    protected PersistenceResponse executePostRemoveHandlers(PersistencePackage persistencePackage, PersistenceResponse persistenceResponse) throws ServiceException {
+        for (PersistenceManagerEventHandler handler : persistenceManagerEventHandlers) {
+            PersistenceManagerEventHandlerResponse response = handler.postRemove(this, persistencePackage);
+            if (PersistenceManagerEventHandlerResponse.PersistenceManagerEventHandlerResponseStatus.HANDLED_BREAK==response.getStatus()) {
+                if (!MapUtils.isEmpty(response.getAdditionalData())) {
+                    persistenceResponse.getAdditionalData().putAll(response.getAdditionalData());
+                }
+                break;
+            } else if (PersistenceManagerEventHandlerResponse.PersistenceManagerEventHandlerResponseStatus.HANDLED==response.getStatus()) {
+                if (!MapUtils.isEmpty(response.getAdditionalData())) {
+                    persistenceResponse.getAdditionalData().putAll(response.getAdditionalData());
+                }
+            }
+        }
+
+        return persistenceResponse;
     }
 
     @Override

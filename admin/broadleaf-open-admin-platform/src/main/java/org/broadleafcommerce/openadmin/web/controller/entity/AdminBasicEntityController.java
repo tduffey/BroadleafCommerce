@@ -35,6 +35,7 @@ import org.broadleafcommerce.openadmin.dto.Property;
 import org.broadleafcommerce.openadmin.server.domain.PersistencePackageRequest;
 import org.broadleafcommerce.openadmin.server.security.domain.AdminSection;
 import org.broadleafcommerce.openadmin.server.security.remote.EntityOperationType;
+import org.broadleafcommerce.openadmin.server.service.persistence.PersistenceResponse;
 import org.broadleafcommerce.openadmin.web.controller.AdminAbstractController;
 import org.broadleafcommerce.openadmin.web.editor.NonNullBooleanEditor;
 import org.broadleafcommerce.openadmin.web.form.component.ListGrid;
@@ -104,8 +105,8 @@ public class AdminBasicEntityController extends AdminAbstractController {
 
         PersistencePackageRequest ppr = getSectionPersistencePackageRequest(sectionClassName, requestParams);
 
-        ClassMetadata cmd = service.getClassMetadata(ppr);
-        DynamicResultSet drs =  service.getRecords(ppr);
+        ClassMetadata cmd = service.getClassMetadata(ppr).getDynamicResultSet().getClassMetaData();
+        DynamicResultSet drs =  service.getRecords(ppr).getDynamicResultSet();
 
         ListGrid listGrid = formService.buildMainListGrid(drs, cmd, sectionKey);
         
@@ -168,7 +169,7 @@ public class AdminBasicEntityController extends AdminAbstractController {
         String sectionKey = getSectionKey(pathVars);
         String sectionClassName = getClassNameForSection(sectionKey);
 
-        ClassMetadata cmd = service.getClassMetadata(getSectionPersistencePackageRequest(sectionClassName));
+        ClassMetadata cmd = service.getClassMetadata(getSectionPersistencePackageRequest(sectionClassName)).getDynamicResultSet().getClassMetaData();
 
         // If the entity type isn't specified, we need to determine if there are various polymorphic types for this entity.
         if (StringUtils.isBlank(entityType)) {
@@ -229,11 +230,11 @@ public class AdminBasicEntityController extends AdminAbstractController {
             @ModelAttribute(value="entityForm") EntityForm entityForm, BindingResult result) throws Exception {
         String sectionKey = getSectionKey(pathVars);
 
-        Entity entity = service.addEntity(entityForm, getSectionCustomCriteria());
+        Entity entity = service.addEntity(entityForm, getSectionCustomCriteria()).getEntity();
         entityFormValidator.validate(entityForm, entity, result);
 
         if (result.hasErrors()) {
-            ClassMetadata cmd = service.getClassMetadata(getSectionPersistencePackageRequest(entityForm.getEntityType()));
+            ClassMetadata cmd = service.getClassMetadata(getSectionPersistencePackageRequest(entityForm.getEntityType())).getDynamicResultSet().getClassMetaData();
             entityForm.clearFieldsMap();
             formService.populateEntityForm(cmd, entity, entityForm);
 
@@ -271,8 +272,8 @@ public class AdminBasicEntityController extends AdminAbstractController {
 
         PersistencePackageRequest ppr = getSectionPersistencePackageRequest(sectionClassName);
 
-        ClassMetadata cmd = service.getClassMetadata(ppr);
-        Entity entity = service.getRecord(ppr, id, cmd, false);
+        ClassMetadata cmd = service.getClassMetadata(ppr).getDynamicResultSet().getClassMetaData();
+        Entity entity = service.getRecord(ppr, id, cmd, false).getDynamicResultSet().getRecords()[0];
         
         Map<String, DynamicResultSet> subRecordsMap = service.getRecordsForAllSubCollections(ppr, entity);
 
@@ -377,14 +378,14 @@ public class AdminBasicEntityController extends AdminAbstractController {
             dynamicForm.addField(entry.getValue());
         }
 
-        Entity entity = service.updateEntity(entityForm, getSectionCustomCriteria());
+        Entity entity = service.updateEntity(entityForm, getSectionCustomCriteria()).getEntity();
         //The id may have changed to support functionality - check if so
         id = entity.findProperty(entityForm.getIdProperty()).getValue();
         
         entityFormValidator.validate(entityForm, entity, result);
         if (result.hasErrors()) {
             Map<String, DynamicResultSet> subRecordsMap = service.getRecordsForAllSubCollections(ppr, entity);
-            ClassMetadata cmd = service.getClassMetadata(ppr);
+            ClassMetadata cmd = service.getClassMetadata(ppr).getDynamicResultSet().getClassMetaData();
             entityForm.clearFieldsMap();
             formService.populateEntityForm(cmd, entity, subRecordsMap, entityForm);
             
@@ -451,7 +452,7 @@ public class AdminBasicEntityController extends AdminAbstractController {
             @PathVariable(value="collectionField") String collectionField,
             @RequestParam  MultiValueMap<String, String> requestParams) throws Exception {
         PersistencePackageRequest ppr = getSectionPersistencePackageRequest(owningClass, requestParams);
-        ClassMetadata mainMetadata = service.getClassMetadata(ppr);
+        ClassMetadata mainMetadata = service.getClassMetadata(ppr).getDynamicResultSet().getClassMetaData();
         Property collectionProperty = mainMetadata.getPMap().get(collectionField);
         FieldMetadata md = collectionProperty.getMetadata();
 
@@ -462,7 +463,7 @@ public class AdminBasicEntityController extends AdminAbstractController {
         ppr.setMaxIndex(getMaxIndex(requestParams));
         
         if (md instanceof BasicFieldMetadata) {
-            DynamicResultSet drs = service.getRecords(ppr);
+            DynamicResultSet drs = service.getRecords(ppr).getDynamicResultSet();
             ListGrid listGrid = formService.buildCollectionListGrid(null, drs, collectionProperty, owningClass);
 
             model.addAttribute("listGrid", listGrid);
@@ -496,7 +497,7 @@ public class AdminBasicEntityController extends AdminAbstractController {
             @PathVariable(value="id") String id) throws Exception {
         String sectionKey = getSectionKey(pathVars);
         String mainClassName = getClassNameForSection(sectionKey);
-        ClassMetadata mainMetadata = service.getClassMetadata(getSectionPersistencePackageRequest(mainClassName));
+        ClassMetadata mainMetadata = service.getClassMetadata(getSectionPersistencePackageRequest(mainClassName)).getDynamicResultSet().getClassMetaData();
         Property collectionProperty = mainMetadata.getPMap().get(collectionField);
         BasicFieldMetadata md = (BasicFieldMetadata) collectionProperty.getMetadata();
 
@@ -528,11 +529,11 @@ public class AdminBasicEntityController extends AdminAbstractController {
         String sectionKey = getSectionKey(pathVars);
         String mainClassName = getClassNameForSection(sectionKey);
         PersistencePackageRequest ppr = getSectionPersistencePackageRequest(mainClassName, requestParams);
-        ClassMetadata mainMetadata = service.getClassMetadata(ppr);
+        ClassMetadata mainMetadata = service.getClassMetadata(ppr).getDynamicResultSet().getClassMetaData();
         Property collectionProperty = mainMetadata.getPMap().get(collectionField);
         
         ppr = getSectionPersistencePackageRequest(mainClassName);
-        Entity entity = service.getRecord(ppr, id, mainMetadata, false);
+        Entity entity = service.getRecord(ppr, id, mainMetadata, false).getDynamicResultSet().getRecords()[0];
 
         // Next, we must get the new list grid that represents this collection
         ListGrid listGrid = getCollectionListGrid(mainMetadata, entity, collectionProperty, requestParams, sectionKey);
@@ -591,7 +592,7 @@ public class AdminBasicEntityController extends AdminAbstractController {
             @RequestParam MultiValueMap<String, String> requestParams) throws Exception {
         String sectionKey = getSectionKey(pathVars);
         String mainClassName = getClassNameForSection(sectionKey);
-        ClassMetadata mainMetadata = service.getClassMetadata(getSectionPersistencePackageRequest(mainClassName));
+        ClassMetadata mainMetadata = service.getClassMetadata(getSectionPersistencePackageRequest(mainClassName)).getDynamicResultSet().getClassMetaData();
         Property collectionProperty = mainMetadata.getPMap().get(collectionField);
         FieldMetadata md = collectionProperty.getMetadata();
         
@@ -626,14 +627,15 @@ public class AdminBasicEntityController extends AdminAbstractController {
             @ModelAttribute(value="entityForm") EntityForm entityForm, BindingResult result) throws Exception {
         String sectionKey = getSectionKey(pathVars);
         String mainClassName = getClassNameForSection(sectionKey);
-        ClassMetadata mainMetadata = service.getClassMetadata(getSectionPersistencePackageRequest(mainClassName));
+        ClassMetadata mainMetadata = service.getClassMetadata(getSectionPersistencePackageRequest(mainClassName)).getDynamicResultSet().getClassMetaData();
         Property collectionProperty = mainMetadata.getPMap().get(collectionField);
 
         PersistencePackageRequest ppr = getSectionPersistencePackageRequest(mainClassName);
-        Entity entity = service.getRecord(ppr, id, mainMetadata, false);
+        Entity entity = service.getRecord(ppr, id, mainMetadata, false).getDynamicResultSet().getRecords()[0];
         
         // First, we must save the collection entity
-        Entity savedEntity = service.addSubCollectionEntity(entityForm, mainMetadata, collectionProperty, entity);
+        PersistenceResponse persistenceResponse = service.addSubCollectionEntity(entityForm, mainMetadata, collectionProperty, entity);
+        Entity savedEntity = persistenceResponse.getEntity();
         entityFormValidator.validate(entityForm, savedEntity, result);
         
         if (result.hasErrors()) {
@@ -644,7 +646,7 @@ public class AdminBasicEntityController extends AdminAbstractController {
         }
 
         // Next, we must get the new list grid that represents this collection
-        ListGrid listGrid = getCollectionListGrid(mainMetadata, entity, collectionProperty, null, sectionKey);
+        ListGrid listGrid = getCollectionListGrid(mainMetadata, entity, collectionProperty, null, sectionKey, persistenceResponse);
         model.addAttribute("listGrid", listGrid);
 
         // We return the new list grid so that it can replace the currently visible one
@@ -687,7 +689,7 @@ public class AdminBasicEntityController extends AdminAbstractController {
             // When adding items to basic collections, we will sometimes show a form to persist a new record
             // and sometimes show a list grid to allow the user to associate an existing record.
             if (fmd.getAddMethodType().equals(AddMethodType.PERSIST)) {
-                ClassMetadata collectionMetadata = service.getClassMetadata(ppr);
+                ClassMetadata collectionMetadata = service.getClassMetadata(ppr).getDynamicResultSet().getClassMetaData();
                 if (entityForm == null) {
                     entityForm = formService.createEntityForm(collectionMetadata);
                 } else {
@@ -699,7 +701,7 @@ public class AdminBasicEntityController extends AdminAbstractController {
                 model.addAttribute("entityForm", entityForm);
                 model.addAttribute("viewType", "modal/simpleAddEntity");
             } else {
-                DynamicResultSet drs = service.getRecords(ppr);
+                DynamicResultSet drs = service.getRecords(ppr).getDynamicResultSet();
                 ListGrid listGrid = formService.buildCollectionListGrid(id, drs, collectionProperty, sectionKey);
                 listGrid.setPathOverride(request.getRequestURL().toString());
 
@@ -714,9 +716,9 @@ public class AdminBasicEntityController extends AdminAbstractController {
             ppr.setOperationTypesOverride(null);
             ppr.setType(PersistencePackageRequest.Type.STANDARD);
 
-            ClassMetadata collectionMetadata = service.getClassMetadata(ppr);
+            ClassMetadata collectionMetadata = service.getClassMetadata(ppr).getDynamicResultSet().getClassMetaData();
 
-            DynamicResultSet drs = service.getRecords(ppr);
+            DynamicResultSet drs = service.getRecords(ppr).getDynamicResultSet();
             ListGrid listGrid = formService.buildMainListGrid(drs, collectionMetadata, sectionKey);
             listGrid.setSubCollectionFieldName(collectionField);
             listGrid.setPathOverride(request.getRequestURL().toString());
@@ -739,7 +741,7 @@ public class AdminBasicEntityController extends AdminAbstractController {
             model.addAttribute("viewType", "modal/adornedSelectEntity");
         } else if (md instanceof MapMetadata) {
             MapMetadata fmd = (MapMetadata) md;
-            ClassMetadata collectionMetadata = service.getClassMetadata(ppr);
+            ClassMetadata collectionMetadata = service.getClassMetadata(ppr).getDynamicResultSet().getClassMetaData();
             
             if (entityForm == null) {
                 entityForm = formService.buildMapForm(fmd, ppr.getMapStructure(), collectionMetadata, id);
@@ -835,12 +837,12 @@ public class AdminBasicEntityController extends AdminAbstractController {
             String id, String collectionField, String collectionItemId, String modalHeaderType, EntityForm entityForm, Entity entity) throws ServiceException {
         String sectionKey = getSectionKey(pathVars);
         String mainClassName = getClassNameForSection(sectionKey);
-        ClassMetadata mainMetadata = service.getClassMetadata(getSectionPersistencePackageRequest(mainClassName));
+        ClassMetadata mainMetadata = service.getClassMetadata(getSectionPersistencePackageRequest(mainClassName)).getDynamicResultSet().getClassMetaData();
         Property collectionProperty = mainMetadata.getPMap().get(collectionField);
         FieldMetadata md = collectionProperty.getMetadata();
 
         PersistencePackageRequest ppr = getSectionPersistencePackageRequest(mainClassName);
-        Entity parentEntity = service.getRecord(ppr, id, mainMetadata, false);
+        Entity parentEntity = service.getRecord(ppr, id, mainMetadata, false).getDynamicResultSet().getRecords()[0];
 
         ppr = PersistencePackageRequest.fromMetadata(md);
         
@@ -848,9 +850,9 @@ public class AdminBasicEntityController extends AdminAbstractController {
                 ((BasicCollectionMetadata) md).getAddMethodType().equals(AddMethodType.PERSIST)) {
             BasicCollectionMetadata fmd = (BasicCollectionMetadata) md;
 
-            ClassMetadata collectionMetadata = service.getClassMetadata(ppr);
+            ClassMetadata collectionMetadata = service.getClassMetadata(ppr).getDynamicResultSet().getClassMetaData();
             if (entity == null) {
-                entity = service.getRecord(ppr, collectionItemId, collectionMetadata, true);
+                entity = service.getRecord(ppr, collectionItemId, collectionMetadata, true).getDynamicResultSet().getRecords()[0];
             }
 
             Map<String, DynamicResultSet> subRecordsMap = service.getRecordsForAllSubCollections(ppr, entity);
@@ -872,7 +874,7 @@ public class AdminBasicEntityController extends AdminAbstractController {
 
             if (entity == null) {
                 entity = service.getAdvancedCollectionRecord(mainMetadata, parentEntity, collectionProperty,
-                    collectionItemId);
+                    collectionItemId).getDynamicResultSet().getRecords()[0];
             }
             
             boolean populateTypeAndId = true;
@@ -894,10 +896,10 @@ public class AdminBasicEntityController extends AdminAbstractController {
         } else if (md instanceof MapMetadata) {
             MapMetadata fmd = (MapMetadata) md;
 
-            ClassMetadata collectionMetadata = service.getClassMetadata(ppr);
+            ClassMetadata collectionMetadata = service.getClassMetadata(ppr).getDynamicResultSet().getClassMetaData();
             if (entity == null) {
                 entity = service.getAdvancedCollectionRecord(mainMetadata, parentEntity, collectionProperty,
-                    collectionItemId);
+                    collectionItemId).getDynamicResultSet().getRecords()[0];
             }
             
             boolean populateTypeAndId = true;
@@ -951,14 +953,15 @@ public class AdminBasicEntityController extends AdminAbstractController {
             @ModelAttribute(value="entityForm") EntityForm entityForm, BindingResult result) throws Exception {
         String sectionKey = getSectionKey(pathVars);
         String mainClassName = getClassNameForSection(sectionKey);
-        ClassMetadata mainMetadata = service.getClassMetadata(getSectionPersistencePackageRequest(mainClassName));
+        ClassMetadata mainMetadata = service.getClassMetadata(getSectionPersistencePackageRequest(mainClassName)).getDynamicResultSet().getClassMetaData();
         Property collectionProperty = mainMetadata.getPMap().get(collectionField);
 
         PersistencePackageRequest ppr = getSectionPersistencePackageRequest(mainClassName);
-        Entity entity = service.getRecord(ppr, id, mainMetadata, false);
+        Entity entity = service.getRecord(ppr, id, mainMetadata, false).getDynamicResultSet().getRecords()[0];
         
         // First, we must save the collection entity
-        Entity savedEntity = service.updateSubCollectionEntity(entityForm, mainMetadata, collectionProperty, entity, collectionItemId);
+        PersistenceResponse persistenceResponse = service.updateSubCollectionEntity(entityForm, mainMetadata, collectionProperty, entity, collectionItemId);
+        Entity savedEntity = persistenceResponse.getEntity();
         entityFormValidator.validate(entityForm, savedEntity, result);
 
         if (result.hasErrors()) {
@@ -967,7 +970,7 @@ public class AdminBasicEntityController extends AdminAbstractController {
         }
         
         // Next, we must get the new list grid that represents this collection
-        ListGrid listGrid = getCollectionListGrid(mainMetadata, entity, collectionProperty, null, sectionKey);
+        ListGrid listGrid = getCollectionListGrid(mainMetadata, entity, collectionProperty, null, sectionKey, persistenceResponse);
         model.addAttribute("listGrid", listGrid);
 
         // We return the new list grid so that it can replace the currently visible one
@@ -999,12 +1002,12 @@ public class AdminBasicEntityController extends AdminAbstractController {
             @RequestParam(value="newSequence") String newSequence) throws Exception {
         String sectionKey = getSectionKey(pathVars);
         String mainClassName = getClassNameForSection(sectionKey);
-        ClassMetadata mainMetadata = service.getClassMetadata(getSectionPersistencePackageRequest(mainClassName));
+        ClassMetadata mainMetadata = service.getClassMetadata(getSectionPersistencePackageRequest(mainClassName)).getDynamicResultSet().getClassMetaData();
         Property collectionProperty = mainMetadata.getPMap().get(collectionField);
         FieldMetadata md = collectionProperty.getMetadata();
         
         PersistencePackageRequest ppr = getSectionPersistencePackageRequest(mainClassName);
-        Entity parentEntity = service.getRecord(ppr, id, mainMetadata, false);
+        Entity parentEntity = service.getRecord(ppr, id, mainMetadata, false).getDynamicResultSet().getRecords()[0];
         
         ppr = PersistencePackageRequest.fromMetadata(md);
         
@@ -1015,7 +1018,7 @@ public class AdminBasicEntityController extends AdminAbstractController {
             // Get an entity form for the entity
             EntityForm entityForm = formService.buildAdornedListForm(fmd, ppr.getAdornedList(), id);
             Entity entity = service.getAdvancedCollectionRecord(mainMetadata, parentEntity, collectionProperty, 
-                    collectionItemId);
+                    collectionItemId).getDynamicResultSet().getRecords()[0];
             formService.populateEntityFormFields(entityForm, entity);
             formService.populateAdornedEntityFormFields(entityForm, entity, ppr.getAdornedList());
             
@@ -1058,13 +1061,13 @@ public class AdminBasicEntityController extends AdminAbstractController {
             @PathVariable(value="collectionItemId") String collectionItemId) throws Exception {
         String sectionKey = getSectionKey(pathVars);
         String mainClassName = getClassNameForSection(sectionKey);
-        ClassMetadata mainMetadata = service.getClassMetadata(getSectionPersistencePackageRequest(mainClassName));
+        ClassMetadata mainMetadata = service.getClassMetadata(getSectionPersistencePackageRequest(mainClassName)).getDynamicResultSet().getClassMetaData();
         Property collectionProperty = mainMetadata.getPMap().get(collectionField);
 
         String priorKey = request.getParameter("key");
         
         PersistencePackageRequest ppr = getSectionPersistencePackageRequest(mainClassName);
-        Entity entity = service.getRecord(ppr, id, mainMetadata, false);
+        Entity entity = service.getRecord(ppr, id, mainMetadata, false).getDynamicResultSet().getRecords()[0];
 
         // First, we must remove the collection entity
         service.removeSubCollectionEntity(mainMetadata, collectionProperty, entity, collectionItemId, priorKey);
