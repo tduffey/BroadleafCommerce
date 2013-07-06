@@ -213,14 +213,6 @@ public class MapStructurePersistenceModule extends BasicPersistenceModule {
                     );
                 }
                 allMergedProperties.put(MergedPropertyType.MAPSTRUCTUREVALUE, valueMergedProperties);
-                //clear out all but the primary key field from the owning entity
-//                Iterator<Map.Entry<String, FieldMetadata>> itr = allMergedProperties.get(MergedPropertyType.PRIMARY).entrySet().iterator();
-//                while (itr.hasNext()) {
-//                    Map.Entry<String, FieldMetadata> entry = itr.next();
-//                    if (!(entry.getValue() instanceof BasicFieldMetadata) || !SupportedFieldType.ID.equals(((BasicFieldMetadata) entry.getValue()).getFieldType())) {
-//                        itr.remove();
-//                    }
-//                }
             }
         } catch (Exception e) {
             throw new ServiceException("Unable to fetch results for " + ceilingEntityFullyQualifiedClassname, e);
