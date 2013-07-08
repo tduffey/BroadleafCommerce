@@ -1070,10 +1070,10 @@ public class AdminBasicEntityController extends AdminAbstractController {
         Entity entity = service.getRecord(ppr, id, mainMetadata, false).getDynamicResultSet().getRecords()[0];
 
         // First, we must remove the collection entity
-        service.removeSubCollectionEntity(mainMetadata, collectionProperty, entity, collectionItemId, priorKey);
+        PersistenceResponse persistenceResponse = service.removeSubCollectionEntity(mainMetadata, collectionProperty, entity, collectionItemId, priorKey);
 
         // Next, we must get the new list grid that represents this collection
-        ListGrid listGrid = getCollectionListGrid(mainMetadata, entity, collectionProperty, null, sectionKey);
+        ListGrid listGrid = getCollectionListGrid(mainMetadata, entity, collectionProperty, null, sectionKey, persistenceResponse);
         model.addAttribute("listGrid", listGrid);
 
         // We return the new list grid so that it can replace the currently visible one

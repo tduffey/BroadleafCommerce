@@ -167,14 +167,8 @@ public class DynamicEntityDaoImpl implements DynamicEntityDao {
     
     @Override
     public void remove(Serializable entity) {
-        boolean isArchivable = Status.class.isAssignableFrom(entity.getClass());
-        if (isArchivable) {
-            ((Status) entity).setArchived('Y');
-            merge(entity);
-        } else {
-            standardEntityManager.remove(entity);
-            standardEntityManager.flush();
-        }
+        standardEntityManager.remove(entity);
+        standardEntityManager.flush();
     }
     
     @Override
