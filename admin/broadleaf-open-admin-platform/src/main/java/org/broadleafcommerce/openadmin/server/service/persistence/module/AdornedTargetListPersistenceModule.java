@@ -101,9 +101,13 @@ public class AdornedTargetListPersistenceModule extends BasicPersistenceModule {
                                                     String ceilingEntity, String fullPropertyName, Path<Serializable> explicitPath,
                                                     List<String> directValues) {
                         if (String.class.isAssignableFrom(explicitPath.getJavaType())) {
-                            return builder.equal(explicitPath, directValues.get(0));
+                            return explicitPath.in(directValues);
                         } else {
-                            return builder.equal(explicitPath, Long.parseLong(directValues.get(0)));
+                            List<Long> converted = new ArrayList<Long>();
+                            for (String directValue : directValues) {
+                                converted.add(Long.parseLong(directValue));
+                            }
+                            return explicitPath.in(converted);
                         }
                     }
                 })
@@ -121,9 +125,13 @@ public class AdornedTargetListPersistenceModule extends BasicPersistenceModule {
                                                     String ceilingEntity, String fullPropertyName, Path<Serializable> explicitPath,
                                                     List<String> directValues) {
                         if (String.class.isAssignableFrom(explicitPath.getJavaType())) {
-                            return builder.equal(explicitPath, directValues.get(0));
+                            return explicitPath.in(directValues);
                         } else {
-                            return builder.equal(explicitPath, Long.parseLong(directValues.get(0)));
+                            List<Long> converted = new ArrayList<Long>();
+                            for (String directValue : directValues) {
+                                converted.add(Long.parseLong(directValue));
+                            }
+                            return explicitPath.in(converted);
                         }
                     }
                 })
