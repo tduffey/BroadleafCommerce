@@ -27,6 +27,7 @@ import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Parameter;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -43,7 +44,7 @@ import javax.persistence.Table;
 @Table(name = "BLC_CAT_SEARCH_FACET_XREF")
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "blStandardElements")
 @AdminPresentationClass(populateToOneFields = PopulateToOneFieldsEnum.TRUE)
-public class CategorySearchFacetImpl implements CategorySearchFacet,Serializable {
+public class CategorySearchFacetImpl implements CategorySearchFacet {
     
     /**
      * 
@@ -74,7 +75,7 @@ public class CategorySearchFacetImpl implements CategorySearchFacet,Serializable
     
     @Column(name = "SEQUENCE")
     @AdminPresentation(friendlyName = "CategorySearchFacetImpl_sequence")
-    protected Long sequence;
+    protected BigDecimal sequence;
 
     @Override
     public Long getId() {
@@ -107,12 +108,12 @@ public class CategorySearchFacetImpl implements CategorySearchFacet,Serializable
     }
 
     @Override
-    public Long getSequence() {
+    public BigDecimal getSequence() {
         return sequence;
     }
 
     @Override
-    public void setSequence(Long sequence) {
+    public void setSequence(BigDecimal sequence) {
         this.sequence = sequence;
     }
     

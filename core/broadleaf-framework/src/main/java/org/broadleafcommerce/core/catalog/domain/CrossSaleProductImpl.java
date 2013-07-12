@@ -33,6 +33,7 @@ import javax.persistence.InheritanceType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import java.math.BigDecimal;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -61,7 +62,7 @@ public class CrossSaleProductImpl implements RelatedProduct {
 
     @Column(name = "SEQUENCE")
     @AdminPresentation(visibility = VisibilityEnum.HIDDEN_ALL)
-    protected Long sequence;
+    protected BigDecimal sequence;
     
     @ManyToOne(targetEntity = ProductImpl.class)
     @JoinColumn(name = "PRODUCT_ID")
@@ -99,12 +100,12 @@ public class CrossSaleProductImpl implements RelatedProduct {
     }
 
     @Override
-    public Long getSequence() {
+    public BigDecimal getSequence() {
         return sequence;
     }
     
     @Override
-    public void setSequence(Long sequence) {
+    public void setSequence(BigDecimal sequence) {
         this.sequence = sequence;
     }
 

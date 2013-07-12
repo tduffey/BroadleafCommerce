@@ -52,6 +52,7 @@ import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -202,6 +203,10 @@ public class AdornedTargetListPersistenceModule extends BasicPersistenceModule {
                 if (idProp != null) {
                     joinMergedProperties.remove(idProp);
                 }
+                //remove the sort field
+                if (adornedTargetList.getSortField() != null) {
+                    joinMergedProperties.remove(adornedTargetList.getSortField());
+                }
                 allMergedProperties.put(MergedPropertyType.ADORNEDTARGETLIST, joinMergedProperties);
             }
         } catch (Exception e) {
@@ -322,35 +327,32 @@ public class AdornedTargetListPersistenceModule extends BasicPersistenceModule {
 
             Assert.isTrue(!CollectionUtils.isEmpty(records), "Entity not found");
 
-            int index = adornedTargetRetrieval.getIndex();
             Map<String, FieldMetadata> mergedProperties = adornedTargetRetrieval.getMergedProperties();
-            FieldManager fieldManager = getFieldManager();
             
-            Serializable myRecord;
+            Serializable myRecord  = records.get(0);
             if (adornedTargetList.getSortField() != null && entity.findProperty(adornedTargetList.getSortField()).getValue() != null) {
-                myRecord = records.get(index);
-                
                 Integer requestedSequence = Integer.valueOf(entity.findProperty(adornedTargetList.getSortField()).getValue());
-                Integer previousSequence = Integer.parseInt(String.valueOf(getFieldManager().getFieldValue(myRecord, adornedTargetList.getSortField())));
-                
-                if (!previousSequence.equals(requestedSequence)) {
-                    // Sequence has changed. Rebalance the list
-                    myRecord = records.remove(index);
-                    myRecord = createPopulatedInstance(myRecord, entity, mergedProperties, false);
-                    if (CollectionUtils.isEmpty(records)) {
-                        records.add(myRecord);
-                    } else {
-                        records.add(requestedSequence - 1, myRecord);
-                    }
-                    
-                    index = 1;
-                    for (Serializable record : records) {
-                        fieldManager.setFieldValue(record, adornedTargetList.getSortField(), Long.valueOf(index));
-                        index++;
-                    }
+                BigDecimal previousSequence = (BigDecimal) getFieldManager().getFieldValue(myRecord, adornedTargetList.getSortField());
+                AdornedTargetRetrieval positionRetrieval = new AdornedTargetRetrieval(persistencePackage, entity, adornedTargetList).invokeForPositionFetch(requestedSequence);
+                BigDecimal currentSequence;
+                BigDecimal beforeCurrentSequence = null;
+                if (positionRetrieval.getRecords().size() > 1) {
+                    beforeCurrentSequence = (BigDecimal) getFieldManager().getFieldValue(positionRetrieval.getRecords().get(0), adornedTargetList.getSortField());
+                    currentSequence = (BigDecimal) getFieldManager().getFieldValue(positionRetrieval.getRecords().get(1), adornedTargetList.getSortField());
+                } else {
+                    currentSequence = (BigDecimal) getFieldManager().getFieldValue(positionRetrieval.getRecords().get(0), adornedTargetList.getSortField());
                 }
-            } else {
-                myRecord = records.get(index);
+
+                if (!previousSequence.equals(currentSequence)) {
+                    //split the difference
+                    BigDecimal newSequence;
+                    if (beforeCurrentSequence != null) {
+                        newSequence = beforeCurrentSequence.add(currentSequence.subtract(beforeCurrentSequence).divide(new BigDecimal("2")));
+                    } else {
+                        newSequence = currentSequence.divide(new BigDecimal("2"));
+                    }
+                    getFieldManager().setFieldValue(myRecord, adornedTargetList.getSortField(), newSequence);
+                }
             }
             
             String ceilingEntityFullyQualifiedClassname = persistencePackage.getCeilingEntityFullyQualifiedClassname();
@@ -468,7 +470,6 @@ public class AdornedTargetListPersistenceModule extends BasicPersistenceModule {
         private AdornedTargetList adornedTargetList;
         private Map<String, FieldMetadata> mergedProperties;
         private List<Serializable> records;
-        private int index;
         private List<FilterMapping> filterMappings;
         private CriteriaTransferObject cto;
 
@@ -493,10 +494,6 @@ public class AdornedTargetListPersistenceModule extends BasicPersistenceModule {
         public List<Serializable> getRecords() {
             return records;
         }
-
-        public int getIndex() {
-            return index;
-        }
         
         public List<FilterMapping> getFilterMappings() {
             return filterMappings;
@@ -508,22 +505,24 @@ public class AdornedTargetListPersistenceModule extends BasicPersistenceModule {
         }
         
         public AdornedTargetRetrieval invokeForUpdate() throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, FieldNotAvailableException, NoSuchFieldException {
-            FilterAndSortCriteria filterCriteria = cto.get(adornedTargetList.getCollectionFieldName());
-            filterCriteria.setFilterValue(entity.findProperty(adornedTargetList.getLinkedObjectPath() + "." + adornedTargetList.getLinkedIdProperty()).getValue());
+            FilterAndSortCriteria filterCriteriaInsertedLinked = cto.get(adornedTargetList.getCollectionFieldName());
+            filterCriteriaInsertedLinked.setFilterValue(entity.findProperty(adornedTargetList.getLinkedObjectPath() + "." + adornedTargetList.getLinkedIdProperty()).getValue());
+            FilterAndSortCriteria filterCriteriaInsertedTarget = cto.get(adornedTargetList.getCollectionFieldName() + "Target");
+            filterCriteriaInsertedTarget.setFilterValue(entity.findProperty(adornedTargetList.getTargetObjectPath() + "." + adornedTargetList.getTargetIdProperty()).getValue());
             
             invokeInternal();
             
-            index = 0;
-            Long myEntityId = Long.valueOf(entity.findProperty(adornedTargetList.getTargetObjectPath() + "." + adornedTargetList.getTargetIdProperty()).getValue());
-            FieldManager fieldManager = getFieldManager();
-            for (Serializable record : records) {
-                Long targetId = (Long) fieldManager.getFieldValue(record, adornedTargetList.getTargetObjectPath() + "." + adornedTargetList.getTargetIdProperty());
-                if (myEntityId.equals(targetId)) {
-                    break;
-                }
-                index++;
-            }
-            
+            return this;
+        }
+
+        public AdornedTargetRetrieval invokeForPositionFetch(Integer position) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, FieldNotAvailableException, NoSuchFieldException {
+            FilterAndSortCriteria filterCriteriaInsertedLinked = cto.get(adornedTargetList.getCollectionFieldName());
+            filterCriteriaInsertedLinked.setFilterValue(entity.findProperty(adornedTargetList.getLinkedObjectPath() + "." + adornedTargetList.getLinkedIdProperty()).getValue());
+            cto.setMaxResults(2);
+            cto.setFirstResult(position-2>0?position-1:position-1);
+
+            invokeInternal();
+
             return this;
         }
 

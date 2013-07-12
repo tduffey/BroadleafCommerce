@@ -33,6 +33,7 @@ import javax.persistence.InheritanceType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import java.math.BigDecimal;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -58,7 +59,7 @@ public class FeaturedProductImpl implements FeaturedProduct {
     
     @Column(name = "SEQUENCE")
     @AdminPresentation(visibility = VisibilityEnum.HIDDEN_ALL)
-    protected Long sequence;
+    protected BigDecimal sequence;
 
     @Column(name = "PROMOTION_MESSAGE")
     @AdminPresentation(friendlyName = "FeaturedProductImpl_Featured_Product_Promotion_Message", largeEntry=true)
@@ -85,12 +86,12 @@ public class FeaturedProductImpl implements FeaturedProduct {
     }
     
     @Override
-    public void setSequence(Long sequence) {
+    public void setSequence(BigDecimal sequence) {
         this.sequence = sequence;
     }
 
     @Override
-    public Long getSequence() {
+    public BigDecimal getSequence() {
         return this.sequence;
     }
 

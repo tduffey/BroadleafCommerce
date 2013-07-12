@@ -37,6 +37,7 @@ import javax.persistence.InheritanceType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import java.math.BigDecimal;
 
 /**
  * The Class CategoryProductXrefImpl is the default implmentation of {@link Category}.
@@ -90,13 +91,13 @@ public class CategoryProductXrefImpl implements CategoryProductXref {
     /** The display order. */
     @Column(name = "DISPLAY_ORDER")
     @AdminPresentation(visibility = VisibilityEnum.HIDDEN_ALL)
-    protected Long displayOrder;
+    protected BigDecimal displayOrder;
 
-    public Long getDisplayOrder() {
+    public BigDecimal getDisplayOrder() {
         return displayOrder;
     }
 
-    public void setDisplayOrder(Long displayOrder) {
+    public void setDisplayOrder(BigDecimal displayOrder) {
         this.displayOrder = displayOrder;
     }
 

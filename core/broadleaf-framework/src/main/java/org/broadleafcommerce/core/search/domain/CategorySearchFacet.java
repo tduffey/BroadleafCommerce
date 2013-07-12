@@ -18,10 +18,13 @@ package org.broadleafcommerce.core.search.domain;
 
 import org.broadleafcommerce.core.catalog.domain.Category;
 
+import java.io.Serializable;
+import java.math.BigDecimal;
+
 /**
  * @author Andre Azzolini (apazzolini)
  */
-public interface CategorySearchFacet {
+public interface CategorySearchFacet extends Serializable {
 
     /**
      * Gets the internal id
@@ -70,7 +73,7 @@ public interface CategorySearchFacet {
      * 
      * @return the sequence of this search facet
      */
-    public Long getSequence();
+    public BigDecimal getSequence();
 
     /**
      * Sets the sequence of this search facet
@@ -78,6 +81,6 @@ public interface CategorySearchFacet {
      * @see #getPosition()
      * @param position
      */
-    public void setSequence(Long sequence);
+    public void setSequence(BigDecimal sequence);
 
 }
