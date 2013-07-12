@@ -519,7 +519,7 @@ public class AdornedTargetListPersistenceModule extends BasicPersistenceModule {
             FilterAndSortCriteria filterCriteriaInsertedLinked = cto.get(adornedTargetList.getCollectionFieldName());
             filterCriteriaInsertedLinked.setFilterValue(entity.findProperty(adornedTargetList.getLinkedObjectPath() + "." + adornedTargetList.getLinkedIdProperty()).getValue());
             cto.setMaxResults(2);
-            cto.setFirstResult(position-2>0?position-1:position-1);
+            cto.setFirstResult(position-2>=0?position-2:position-1);
 
             invokeInternal();
 
