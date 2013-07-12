@@ -153,7 +153,7 @@ public class DirectCopyClassTransformer implements BroadleafClassTransformer {
 
                                 logger.debug(String.format("Removing method [%s]", method.getName()));
                                 if (renameMethodOverlaps) {
-                                    method.setName(renameMethodPrefix + method.getName());
+                                    originalMethod.setName(renameMethodPrefix + method.getName());
                                 } else {
                                     clazz.removeMethod(originalMethod);
                                 }
