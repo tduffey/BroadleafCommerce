@@ -333,15 +333,18 @@ public class AdornedTargetListPersistenceModule extends BasicPersistenceModule {
             if (adornedTargetList.getSortField() != null && entity.findProperty(adornedTargetList.getSortField()).getValue() != null) {
                 Integer requestedSequence = Integer.valueOf(entity.findProperty(adornedTargetList.getSortField()).getValue());
                 BigDecimal previousSequence = (BigDecimal) getFieldManager().getFieldValue(myRecord, adornedTargetList.getSortField());
+                previousSequence = previousSequence.setScale(10);
                 AdornedTargetRetrieval positionRetrieval = new AdornedTargetRetrieval(persistencePackage, entity, adornedTargetList).invokeForPositionFetch(requestedSequence);
                 BigDecimal currentSequence;
                 BigDecimal beforeCurrentSequence = null;
                 if (positionRetrieval.getRecords().size() > 1) {
                     beforeCurrentSequence = (BigDecimal) getFieldManager().getFieldValue(positionRetrieval.getRecords().get(0), adornedTargetList.getSortField());
+                    beforeCurrentSequence = beforeCurrentSequence.setScale(10);
                     currentSequence = (BigDecimal) getFieldManager().getFieldValue(positionRetrieval.getRecords().get(1), adornedTargetList.getSortField());
                 } else {
                     currentSequence = (BigDecimal) getFieldManager().getFieldValue(positionRetrieval.getRecords().get(0), adornedTargetList.getSortField());
                 }
+                currentSequence = currentSequence.setScale(10);
 
                 if (!previousSequence.equals(currentSequence)) {
                     //split the difference
