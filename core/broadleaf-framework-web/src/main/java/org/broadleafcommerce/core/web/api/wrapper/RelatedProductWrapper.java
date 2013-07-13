@@ -23,6 +23,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.math.BigDecimal;
 
 /**
  * This is a JAXB wrapper for RelatedProducts
@@ -38,7 +39,7 @@ public class RelatedProductWrapper extends BaseWrapper implements APIWrapper<Rel
     protected Long id;
     
     @XmlElement
-    protected Long sequence;
+    protected BigDecimal sequence;
     
     @XmlElement
     protected String promotionalMessage;
