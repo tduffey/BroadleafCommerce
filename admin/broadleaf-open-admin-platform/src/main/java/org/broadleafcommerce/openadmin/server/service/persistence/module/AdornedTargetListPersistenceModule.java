@@ -52,7 +52,6 @@ import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -79,7 +78,7 @@ public class AdornedTargetListPersistenceModule extends BasicPersistenceModule {
             extractPropertiesFromMetadata(inheritanceLine, mergedProperties.get(MergedPropertyType.ADORNEDTARGETLIST), properties, true, MergedPropertyType.ADORNEDTARGETLIST);
         }
     }
-    
+
     public List<FilterMapping> getBasicFilterMappings(PersistencePerspective persistencePerspective,
                     CriteriaTransferObject cto, Map<String, FieldMetadata> mergedProperties,
                     String cefqcn) {
@@ -289,7 +288,7 @@ public class AdornedTargetListPersistenceModule extends BasicPersistenceModule {
                     List<FilterMapping> filterMappings = getAdornedTargetFilterMappings(persistencePerspective, cto,
                             mergedProperties, adornedTargetList);
                     int totalRecords = getTotalRecords(adornedTargetList.getAdornedTargetEntityClassname(), filterMappings);
-                    fieldManager.setFieldValue(instance, adornedTargetList.getSortField(), new BigDecimal(totalRecords + 1));
+                    fieldManager.setFieldValue(instance, adornedTargetList.getSortField(), Long.valueOf(totalRecords + 1));
                 }
                 instance = persistenceManager.getDynamicEntityDao().merge(instance);
                 persistenceManager.getDynamicEntityDao().clear();
@@ -323,49 +322,37 @@ public class AdornedTargetListPersistenceModule extends BasicPersistenceModule {
 
             Assert.isTrue(!CollectionUtils.isEmpty(records), "Entity not found");
 
+            int index = adornedTargetRetrieval.getIndex();
             Map<String, FieldMetadata> mergedProperties = adornedTargetRetrieval.getMergedProperties();
+            FieldManager fieldManager = getFieldManager();
 
-            BigDecimal newSequence = null;
-            Serializable myRecord  = records.get(0);
+            Serializable myRecord;
             if (adornedTargetList.getSortField() != null && entity.findProperty(adornedTargetList.getSortField()).getValue() != null) {
-                Integer requestedSequence = Integer.valueOf(entity.findProperty(adornedTargetList.getSortField()).getValue());
-                BigDecimal previousSequence = (BigDecimal) getFieldManager().getFieldValue(myRecord, adornedTargetList.getSortField());
-                AdornedTargetRetrieval positionRetrieval = new AdornedTargetRetrieval(persistencePackage, entity, adornedTargetList).invokeForPositionFetch(requestedSequence);
-                BigDecimal sequence1;
-                BigDecimal sequence2 = null;
-                int totalRecords = getTotalRecords(adornedTargetList.getAdornedTargetEntityClassname(), positionRetrieval.getFilterMappings());
-                if (positionRetrieval.getRecords().size() > 1) {
-                    sequence1 = (BigDecimal) getFieldManager().getFieldValue(positionRetrieval.getRecords().get(0), adornedTargetList.getSortField());
-                    sequence2 = (BigDecimal) getFieldManager().getFieldValue(positionRetrieval.getRecords().get(1), adornedTargetList.getSortField());
-                } else {
-                    sequence1 = (BigDecimal) getFieldManager().getFieldValue(positionRetrieval.getRecords().get(0), adornedTargetList.getSortField());
-                }
-                boolean isStart = requestedSequence - 1 == 0;
-                boolean isEnd = requestedSequence == totalRecords;
-                BigDecimal currentSequence;
-                BigDecimal beforeCurrentSequence = null;
-                if (isStart) {
-                    currentSequence = sequence1;
-                } else {
-                    if (sequence2 != null) {
-                        beforeCurrentSequence = sequence1;
-                        currentSequence = sequence2;
-                    } else {
-                        currentSequence = sequence1;
-                    }
-                }
+                myRecord = records.get(index);
 
-                if (!previousSequence.equals(currentSequence)) {
-                    if (isStart) {
-                        newSequence = currentSequence.divide(new BigDecimal("2"));
-                    } else if (isEnd) {
-                        newSequence = currentSequence.add(new BigDecimal("1"));
+                Integer requestedSequence = Integer.valueOf(entity.findProperty(adornedTargetList.getSortField()).getValue());
+                Integer previousSequence = Integer.parseInt(String.valueOf(getFieldManager().getFieldValue(myRecord, adornedTargetList.getSortField())));
+
+                if (!previousSequence.equals(requestedSequence)) {
+                    // Sequence has changed. Rebalance the list
+                    myRecord = records.remove(index);
+                    myRecord = createPopulatedInstance(myRecord, entity, mergedProperties, false);
+                    if (CollectionUtils.isEmpty(records)) {
+                        records.add(myRecord);
                     } else {
-                        newSequence = beforeCurrentSequence.add(currentSequence.subtract(beforeCurrentSequence).divide(new BigDecimal("2")));
+                        records.add(requestedSequence - 1, myRecord);
+                    }
+
+                    index = 1;
+                    for (Serializable record : records) {
+                        fieldManager.setFieldValue(record, adornedTargetList.getSortField(), Long.valueOf(index));
+                        index++;
                     }
                 }
+            } else {
+                myRecord = records.get(index);
             }
-            
+
             String ceilingEntityFullyQualifiedClassname = persistencePackage.getCeilingEntityFullyQualifiedClassname();
             Class<?>[] entities = persistenceManager.getPolymorphicEntities(ceilingEntityFullyQualifiedClassname);
             Map<String, FieldMetadata> mergedPropertiesTarget = persistenceManager.getDynamicEntityDao().getMergedProperties(
@@ -382,9 +369,6 @@ public class AdornedTargetListPersistenceModule extends BasicPersistenceModule {
                     ""
             );
             myRecord = createPopulatedInstance(myRecord, entity, mergedProperties, false);
-            if (newSequence != null) {
-                getFieldManager().setFieldValue(myRecord, adornedTargetList.getSortField(), newSequence);
-            }
             myRecord = persistenceManager.getDynamicEntityDao().merge(myRecord);
             List<Serializable> myList = new ArrayList<Serializable>();
             myList.add(myRecord);
@@ -462,7 +446,7 @@ public class AdornedTargetListPersistenceModule extends BasicPersistenceModule {
                     persistencePerspective.getConfigurationKey(),
                     ""
             );
-            
+
             AdornedTargetRetrieval adornedTargetRetrieval = new AdornedTargetRetrieval(persistencePackage, adornedTargetList, cto).invokeForFetch();
             List<Serializable> records = adornedTargetRetrieval.getRecords();
             Map<String, FieldMetadata> mergedProperties = adornedTargetRetrieval.getMergedProperties();
@@ -484,6 +468,7 @@ public class AdornedTargetListPersistenceModule extends BasicPersistenceModule {
         private AdornedTargetList adornedTargetList;
         private Map<String, FieldMetadata> mergedProperties;
         private List<Serializable> records;
+        private int index;
         private List<FilterMapping> filterMappings;
         private CriteriaTransferObject cto;
 
@@ -492,7 +477,7 @@ public class AdornedTargetListPersistenceModule extends BasicPersistenceModule {
             this(persistencePackage, adornedTargetList, new CriteriaTransferObject());
             this.entity = entity;
         }
-        
+
         // This constructor is used by the fetch method
         public AdornedTargetRetrieval(PersistencePackage persistencePackage, AdornedTargetList adornedTargetList, CriteriaTransferObject cto) {
             this.persistencePackage = persistencePackage;
@@ -508,7 +493,11 @@ public class AdornedTargetListPersistenceModule extends BasicPersistenceModule {
         public List<Serializable> getRecords() {
             return records;
         }
-        
+
+        public int getIndex() {
+            return index;
+        }
+
         public List<FilterMapping> getFilterMappings() {
             return filterMappings;
         }
@@ -517,31 +506,23 @@ public class AdornedTargetListPersistenceModule extends BasicPersistenceModule {
             invokeInternal();
             return this;
         }
-        
+
         public AdornedTargetRetrieval invokeForUpdate() throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, FieldNotAvailableException, NoSuchFieldException {
-            FilterAndSortCriteria filterCriteriaInsertedLinked = cto.get(adornedTargetList.getCollectionFieldName());
-            filterCriteriaInsertedLinked.setFilterValue(entity.findProperty(adornedTargetList.getLinkedObjectPath() + "." + adornedTargetList.getLinkedIdProperty()).getValue());
-            FilterAndSortCriteria filterCriteriaInsertedTarget = cto.get(adornedTargetList.getCollectionFieldName() + "Target");
-            filterCriteriaInsertedTarget.setFilterValue(entity.findProperty(adornedTargetList.getTargetObjectPath() + "." + adornedTargetList.getTargetIdProperty()).getValue());
-            
-            invokeInternal();
-            
-            return this;
-        }
+            FilterAndSortCriteria filterCriteria = cto.get(adornedTargetList.getCollectionFieldName());
+            filterCriteria.setFilterValue(entity.findProperty(adornedTargetList.getLinkedObjectPath() + "." + adornedTargetList.getLinkedIdProperty()).getValue());
 
-        public AdornedTargetRetrieval invokeForPositionFetch(Integer position) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, FieldNotAvailableException, NoSuchFieldException {
-            FilterAndSortCriteria filterCriteriaInsertedLinked = cto.get(adornedTargetList.getCollectionFieldName());
-            List<String> filterValues = new ArrayList<String>();
-            filterValues.add(entity.findProperty(adornedTargetList.getLinkedObjectPath() + "." + adornedTargetList.getLinkedIdProperty()).getValue());
-            filterCriteriaInsertedLinked.setFilterValues(filterValues);
-            if (position-2>=0) {
-                cto.setFirstResult(position-2);
-            } else {
-                cto.setFirstResult(position-1);
+            invokeInternal();
+
+            index = 0;
+            Long myEntityId = Long.valueOf(entity.findProperty(adornedTargetList.getTargetObjectPath() + "." + adornedTargetList.getTargetIdProperty()).getValue());
+            FieldManager fieldManager = getFieldManager();
+            for (Serializable record : records) {
+                Long targetId = (Long) fieldManager.getFieldValue(record, adornedTargetList.getTargetObjectPath() + "." + adornedTargetList.getTargetIdProperty());
+                if (myEntityId.equals(targetId)) {
+                    break;
+                }
+                index++;
             }
-            cto.setMaxResults(2);
-
-            invokeInternal();
 
             return this;
         }
@@ -551,7 +532,7 @@ public class AdornedTargetListPersistenceModule extends BasicPersistenceModule {
                 FilterAndSortCriteria sortCriteria = cto.get(adornedTargetList.getSortField());
                 sortCriteria.setSortAscending(adornedTargetList.getSortAscending());
             }
-            
+
             Class<?>[] entities = persistenceManager.getPolymorphicEntities(adornedTargetList
                     .getAdornedTargetEntityClassname());
             mergedProperties = persistenceManager.getDynamicEntityDao().getMergedProperties(
@@ -568,7 +549,7 @@ public class AdornedTargetListPersistenceModule extends BasicPersistenceModule {
                     ""
             );
             filterMappings = getAdornedTargetFilterMappings(persistencePerspective, cto, mergedProperties, adornedTargetList);
-            
+
             String ceilingEntityFullyQualifiedClassname = persistencePackage.getCeilingEntityFullyQualifiedClassname();
             Class<?>[] entities2 = persistenceManager.getPolymorphicEntities(ceilingEntityFullyQualifiedClassname);
             Map<String, FieldMetadata> mergedPropertiesTarget = persistenceManager.getDynamicEntityDao()
@@ -585,14 +566,14 @@ public class AdornedTargetListPersistenceModule extends BasicPersistenceModule {
                     persistencePerspective.getConfigurationKey(),
                     ""
             );
-            
+
             // We need to make sure that the target merged properties have the target object path prefix
             Map<String, FieldMetadata> convertedMergedPropertiesTarget = new HashMap<String, FieldMetadata>();
             String prefix = adornedTargetList.getTargetObjectPath();
             for (Entry<String, FieldMetadata> entry : mergedPropertiesTarget.entrySet()) {
                 convertedMergedPropertiesTarget.put(prefix + "." + entry.getKey(), entry.getValue());
             }
-            
+
             // We also need to make sure that the cto filter and sort criteria have the prefix
             Map<String, FilterAndSortCriteria> convertedCto = new HashMap<String, FilterAndSortCriteria>();
             for (Entry<String, FilterAndSortCriteria> entry : cto.getCriteriaMap().entrySet()) {
@@ -603,12 +584,10 @@ public class AdornedTargetListPersistenceModule extends BasicPersistenceModule {
                 }
             }
             cto.setCriteriaMap(convertedCto);
-            
+
             List<FilterMapping> filterMappings2 = getBasicFilterMappings(persistencePerspective, cto, convertedMergedPropertiesTarget, ceilingEntityFullyQualifiedClassname);
             filterMappings.addAll(filterMappings2);
 
-            filterMappings = manipulateFilterMappingsBeforeFetch(filterMappings, persistencePackage, cto);
-            
             records = getPersistentRecords(adornedTargetList.getAdornedTargetEntityClassname(), filterMappings, cto.getFirstResult(), cto.getMaxResults());
         }
     }
