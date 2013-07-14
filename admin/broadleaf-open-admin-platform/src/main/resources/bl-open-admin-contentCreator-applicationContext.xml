@@ -204,4 +204,11 @@
         </property>
     </bean>
 
+    <bean id="blRebalanceDialects" class="org.springframework.beans.factory.config.ListFactoryBean">
+        <property name="sourceList">
+            <list>
+                <ref bean="blMySqlRebalanceDialect"/>
+            </list>
+        </property>
+    </bean>
 </beans>
