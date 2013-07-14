@@ -60,7 +60,7 @@ public class UpSaleProductImpl implements RelatedProduct {
     @AdminPresentation(friendlyName = "UpSaleProductImpl_Upsale_Promotion_Message", largeEntry=true)
     private String promotionMessage;
 
-    @Column(name = "SEQUENCE", precision = 19, scale = 10)
+    @Column(name = "SEQUENCE", precision = 10, scale = 6)
     @AdminPresentation(visibility = VisibilityEnum.HIDDEN_ALL)
     private BigDecimal sequence;
     

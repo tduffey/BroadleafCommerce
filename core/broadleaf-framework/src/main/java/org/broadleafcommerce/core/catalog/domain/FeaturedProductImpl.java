@@ -57,7 +57,7 @@ public class FeaturedProductImpl implements FeaturedProduct {
     @Column(name = "FEATURED_PRODUCT_ID")
     protected Long id;
     
-    @Column(name = "SEQUENCE", precision = 19, scale = 10)
+    @Column(name = "SEQUENCE", precision = 10, scale = 6)
     @AdminPresentation(visibility = VisibilityEnum.HIDDEN_ALL)
     protected BigDecimal sequence;
 

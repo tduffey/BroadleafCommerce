@@ -89,7 +89,7 @@ public class CategoryProductXrefImpl implements CategoryProductXref {
     protected Product product = new ProductImpl();
 
     /** The display order. */
-    @Column(name = "DISPLAY_ORDER", precision = 19, scale = 10)
+    @Column(name = "DISPLAY_ORDER", precision = 10, scale = 6)
     @AdminPresentation(visibility = VisibilityEnum.HIDDEN_ALL)
     protected BigDecimal displayOrder;
 

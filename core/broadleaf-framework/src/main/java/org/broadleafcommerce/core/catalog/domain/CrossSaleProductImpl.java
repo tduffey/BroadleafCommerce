@@ -60,7 +60,7 @@ public class CrossSaleProductImpl implements RelatedProduct {
     @AdminPresentation(friendlyName = "CrossSaleProductImpl_Cross_Sale_Promotion_Message", largeEntry=true)
     protected String promotionMessage;
 
-    @Column(name = "SEQUENCE", precision = 19, scale = 10)
+    @Column(name = "SEQUENCE", precision = 10, scale = 6)
     @AdminPresentation(visibility = VisibilityEnum.HIDDEN_ALL)
     protected BigDecimal sequence;
     
