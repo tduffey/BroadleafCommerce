@@ -995,6 +995,12 @@ public class BasicPersistenceModule implements PersistenceModule, RecordHelper, 
     }
 
     @Override
+    public Serializable getMaxValue(String ceilingEntity, List<FilterMapping> filterMappings, String maxField) {
+        return criteriaTranslator.translateMaxQuery(persistenceManager.getDynamicEntityDao(),
+                        ceilingEntity, filterMappings, maxField).getSingleResult();
+    }
+
+    @Override
     public List<Serializable> getPersistentRecords(String ceilingEntity, List<FilterMapping> filterMappings, Integer firstResult, Integer maxResults) {
         return criteriaTranslator.translateQuery(persistenceManager.getDynamicEntityDao(), ceilingEntity, filterMappings, firstResult, maxResults).getResultList();
     }

@@ -52,6 +52,7 @@ import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -282,13 +283,18 @@ public class AdornedTargetListPersistenceModule extends BasicPersistenceModule {
                 if (adornedTargetList.getSortField() != null) {
                     CriteriaTransferObject cto = new CriteriaTransferObject();
                     FilterAndSortCriteria filterCriteria = cto.get(adornedTargetList.getCollectionFieldName());
-                    filterCriteria.setFilterValue(entity.findProperty(adornedTargetList.getInverse() ? targetPath : linkedPath).getValue());
+                    List<String> filterValues = new ArrayList<String>();
+                    filterValues.add(entity.findProperty(adornedTargetList.getInverse() ? targetPath : linkedPath).getValue());
+                    if (entity.findProperty("__originalLinkedId") != null) {
+                        filterValues.add(entity.findProperty("__originalLinkedId").getValue());
+                    }
+                    filterCriteria.setFilterValues(filterValues);
                     FilterAndSortCriteria sortCriteria = cto.get(adornedTargetList.getSortField());
                     sortCriteria.setSortAscending(adornedTargetList.getSortAscending());
                     List<FilterMapping> filterMappings = getAdornedTargetFilterMappings(persistencePerspective, cto,
                             mergedProperties, adornedTargetList);
-                    int totalRecords = getTotalRecords(adornedTargetList.getAdornedTargetEntityClassname(), filterMappings);
-                    fieldManager.setFieldValue(instance, adornedTargetList.getSortField(), Long.valueOf(totalRecords + 1));
+                    BigDecimal max = (BigDecimal) getMaxValue(adornedTargetList.getAdornedTargetEntityClassname(), filterMappings, adornedTargetList.getSortField());
+                    fieldManager.setFieldValue(instance, adornedTargetList.getSortField(), max.add(new BigDecimal("1")));
                 }
                 instance = persistenceManager.getDynamicEntityDao().merge(instance);
                 persistenceManager.getDynamicEntityDao().clear();
@@ -345,7 +351,7 @@ public class AdornedTargetListPersistenceModule extends BasicPersistenceModule {
 
                     index = 1;
                     for (Serializable record : records) {
-                        fieldManager.setFieldValue(record, adornedTargetList.getSortField(), Long.valueOf(index));
+                        fieldManager.setFieldValue(record, adornedTargetList.getSortField(), new BigDecimal(index));
                         index++;
                     }
                 }

@@ -32,6 +32,7 @@ import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,15 +44,20 @@ public class CriteriaTranslatorImpl implements CriteriaTranslator {
 
     @Override
     public TypedQuery<Serializable> translateCountQuery(DynamicEntityDao dynamicEntityDao, String ceilingEntity, List<FilterMapping> filterMappings) {
-        return constructQuery(dynamicEntityDao, ceilingEntity, filterMappings, true, null, null);
+        return constructQuery(dynamicEntityDao, ceilingEntity, filterMappings, true, false, null, null, null);
+    }
+
+    @Override
+    public TypedQuery<Serializable> translateMaxQuery(DynamicEntityDao dynamicEntityDao, String ceilingEntity, List<FilterMapping> filterMappings, String maxField) {
+        return constructQuery(dynamicEntityDao, ceilingEntity, filterMappings, false, true, null, null, maxField);
     }
 
     @Override
     public TypedQuery<Serializable> translateQuery(DynamicEntityDao dynamicEntityDao, String ceilingEntity, List<FilterMapping> filterMappings, Integer firstResult, Integer maxResults) {
-        return constructQuery(dynamicEntityDao, ceilingEntity, filterMappings, false, firstResult, maxResults);
+        return constructQuery(dynamicEntityDao, ceilingEntity, filterMappings, false, false, firstResult, maxResults, null);
     }
 
-    protected TypedQuery<Serializable> constructQuery(DynamicEntityDao dynamicEntityDao, String ceilingEntity, List<FilterMapping> filterMappings, boolean isCount, Integer firstResult, Integer maxResults) {
+    protected TypedQuery<Serializable> constructQuery(DynamicEntityDao dynamicEntityDao, String ceilingEntity, List<FilterMapping> filterMappings, boolean isCount, boolean isMax, Integer firstResult, Integer maxResults, String maxField) {
         CriteriaBuilder criteriaBuilder = dynamicEntityDao.getStandardEntityManager().getCriteriaBuilder();
         Class<Serializable> ceilingMarker;
         try {
@@ -66,6 +72,8 @@ public class CriteriaTranslatorImpl implements CriteriaTranslator {
         Root<Serializable> original = criteria.from(ceilingClass);
         if (isCount) {
             criteria.select(criteriaBuilder.count(original));
+        } else if (isMax) {
+            criteria.select(criteriaBuilder.max((Path<Number>) ((Object) original.get(maxField))));
         } else {
             criteria.select(original);
         }
