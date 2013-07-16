@@ -11,6 +11,6 @@ public interface RebalanceDialect {
 
     public boolean canHandle(Dialect hibernateDialect);
 
-    public String[] createRebalanceQuery(String tableName, String sortColumn, String whereClause, BigDecimal startValue, BigDecimal increment);
+    public String[] createRebalanceQuery(String tableName, String idColumn, String sortColumn, String whereClause, BigDecimal startValue, BigDecimal increment);
 
 }

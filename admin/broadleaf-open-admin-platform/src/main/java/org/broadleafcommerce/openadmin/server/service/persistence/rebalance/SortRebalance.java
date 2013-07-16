@@ -36,12 +36,12 @@ public class SortRebalance {
         this.dialects = dialects;
     }
 
-    public int rebalanceRows(String tableName, String sortColumn, String whereClause, BigDecimal startValue, BigDecimal increment) {
+    public int rebalanceRows(String tableName, String idColumn, String sortColumn, String whereClause, BigDecimal startValue, BigDecimal increment) {
         SessionFactoryImplementor factory = (SessionFactoryImplementor) em.unwrap(Session.class).getSessionFactory();
         Dialect hibernateDialect = factory.getDialect();
         for (RebalanceDialect dialect : dialects) {
             if (dialect.canHandle(hibernateDialect)) {
-                final String[] queries = dialect.createRebalanceQuery(tableName, sortColumn, whereClause, startValue, increment);
+                final String[] queries = dialect.createRebalanceQuery(tableName, idColumn, sortColumn, whereClause, startValue, increment);
                 return em.unwrap(Session.class).doReturningWork(new ReturningWork<Integer>() {
                     @Override
                     public Integer execute(Connection connection) throws SQLException {
