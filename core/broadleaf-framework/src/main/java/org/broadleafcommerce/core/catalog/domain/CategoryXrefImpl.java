@@ -36,6 +36,7 @@ import javax.persistence.InheritanceType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import java.math.BigDecimal;
 
 /**
  * The Class CategoryXrefImpl is for testing purposes only.  It helps autogenerate the cross reference table
@@ -76,15 +77,15 @@ public class CategoryXrefImpl implements CategoryXref {
     @JoinColumn(name = "SUB_CATEGORY_ID")
     protected Category subCategory = new CategoryImpl();
 
-    @Column(name = "DISPLAY_ORDER")
+    @Column(name = "DISPLAY_ORDER", precision = 10, scale = 6)
     @AdminPresentation(visibility = VisibilityEnum.HIDDEN_ALL)
-    protected Long displayOrder;
+    protected BigDecimal displayOrder;
 
-    public Long getDisplayOrder() {
+    public BigDecimal getDisplayOrder() {
         return displayOrder;
     }
 
-    public void setDisplayOrder(final Long displayOrder) {
+    public void setDisplayOrder(final BigDecimal displayOrder) {
         this.displayOrder = displayOrder;
     }
 

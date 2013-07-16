@@ -17,12 +17,13 @@
 package org.broadleafcommerce.core.catalog.domain;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 public interface CategoryXref extends Serializable {
 
-    public Long getDisplayOrder();
+    public BigDecimal getDisplayOrder();
 
-    public void setDisplayOrder(final Long displayOrder);
+    public void setDisplayOrder(final BigDecimal displayOrder);
     
     public Category getCategory();
 
