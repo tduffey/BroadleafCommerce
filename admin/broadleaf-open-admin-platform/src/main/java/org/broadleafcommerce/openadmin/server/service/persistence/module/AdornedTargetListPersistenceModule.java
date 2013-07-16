@@ -294,6 +294,9 @@ public class AdornedTargetListPersistenceModule extends BasicPersistenceModule {
                     List<FilterMapping> filterMappings = getAdornedTargetFilterMappings(persistencePerspective, cto,
                             mergedProperties, adornedTargetList);
                     BigDecimal max = (BigDecimal) getMaxValue(adornedTargetList.getAdornedTargetEntityClassname(), filterMappings, adornedTargetList.getSortField());
+                    if (max == null) {
+                        max = new BigDecimal("0");
+                    }
                     fieldManager.setFieldValue(instance, adornedTargetList.getSortField(), max.add(new BigDecimal("1")));
                 }
                 instance = persistenceManager.getDynamicEntityDao().merge(instance);
