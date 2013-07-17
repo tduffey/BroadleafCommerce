@@ -24,6 +24,9 @@ public class PersistencePackage implements Serializable {
     private static final long serialVersionUID = 1L;
     
     protected String ceilingEntityFullyQualifiedClassname;
+    protected String sectionEntityClassname;
+    protected String sectionEntityIdValue;
+    protected String sectionEntityField;
     protected String fetchTypeFullyQualifiedClassname;
     protected PersistencePerspective persistencePerspective;
     protected String[] customCriteria;
@@ -106,6 +109,30 @@ public class PersistencePackage implements Serializable {
         this.batchId = batchId;
     }
 
+    public String getSectionEntityClassname() {
+        return sectionEntityClassname;
+    }
+
+    public void setSectionEntityClassname(String sectionEntityClassname) {
+        this.sectionEntityClassname = sectionEntityClassname;
+    }
+
+    public String getSectionEntityIdValue() {
+        return sectionEntityIdValue;
+    }
+
+    public void setSectionEntityIdValue(String sectionEntityIdValue) {
+        this.sectionEntityIdValue = sectionEntityIdValue;
+    }
+
+    public String getSectionEntityField() {
+        return sectionEntityField;
+    }
+
+    public void setSectionEntityField(String sectionEntityField) {
+        this.sectionEntityField = sectionEntityField;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -113,14 +140,27 @@ public class PersistencePackage implements Serializable {
 
         PersistencePackage that = (PersistencePackage) o;
 
-        if (batchId != that.batchId) return false;
-        if (ceilingEntityFullyQualifiedClassname != null ? !ceilingEntityFullyQualifiedClassname.equals(that.ceilingEntityFullyQualifiedClassname) : that.ceilingEntityFullyQualifiedClassname != null)
+        if (batchId != null ? !batchId.equals(that.batchId) : that.batchId != null) return false;
+        if (ceilingEntityFullyQualifiedClassname != null ? !ceilingEntityFullyQualifiedClassname.equals(that
+                .ceilingEntityFullyQualifiedClassname) : that.ceilingEntityFullyQualifiedClassname != null)
             return false;
+        if (csrfToken != null ? !csrfToken.equals(that.csrfToken) : that.csrfToken != null) return false;
         if (!Arrays.equals(customCriteria, that.customCriteria)) return false;
         if (entity != null ? !entity.equals(that.entity) : that.entity != null) return false;
-        if (fetchTypeFullyQualifiedClassname != null ? !fetchTypeFullyQualifiedClassname.equals(that.fetchTypeFullyQualifiedClassname) : that.fetchTypeFullyQualifiedClassname != null)
+        if (fetchTypeFullyQualifiedClassname != null ? !fetchTypeFullyQualifiedClassname.equals(that
+                .fetchTypeFullyQualifiedClassname) : that.fetchTypeFullyQualifiedClassname != null)
             return false;
-        if (persistencePerspective != null ? !persistencePerspective.equals(that.persistencePerspective) : that.persistencePerspective != null)
+        if (persistencePerspective != null ? !persistencePerspective.equals(that.persistencePerspective) : that
+                .persistencePerspective != null)
+            return false;
+        if (sectionEntityClassname != null ? !sectionEntityClassname.equals(that.sectionEntityClassname) : that
+                .sectionEntityClassname != null)
+            return false;
+        if (sectionEntityField != null ? !sectionEntityField.equals(that.sectionEntityField) : that
+                .sectionEntityField != null)
+            return false;
+        if (sectionEntityIdValue != null ? !sectionEntityIdValue.equals(that.sectionEntityIdValue) : that
+                .sectionEntityIdValue != null)
             return false;
 
         return true;
@@ -129,11 +169,16 @@ public class PersistencePackage implements Serializable {
     @Override
     public int hashCode() {
         int result = ceilingEntityFullyQualifiedClassname != null ? ceilingEntityFullyQualifiedClassname.hashCode() : 0;
-        result = 31 * result + (fetchTypeFullyQualifiedClassname != null ? fetchTypeFullyQualifiedClassname.hashCode() : 0);
+        result = 31 * result + (sectionEntityClassname != null ? sectionEntityClassname.hashCode() : 0);
+        result = 31 * result + (sectionEntityIdValue != null ? sectionEntityIdValue.hashCode() : 0);
+        result = 31 * result + (sectionEntityField != null ? sectionEntityField.hashCode() : 0);
+        result = 31 * result + (fetchTypeFullyQualifiedClassname != null ? fetchTypeFullyQualifiedClassname.hashCode
+                () : 0);
         result = 31 * result + (persistencePerspective != null ? persistencePerspective.hashCode() : 0);
         result = 31 * result + (customCriteria != null ? Arrays.hashCode(customCriteria) : 0);
         result = 31 * result + (entity != null ? entity.hashCode() : 0);
-        result = 31 * result + batchId;
+        result = 31 * result + (csrfToken != null ? csrfToken.hashCode() : 0);
+        result = 31 * result + (batchId != null ? batchId.hashCode() : 0);
         return result;
     }
 }

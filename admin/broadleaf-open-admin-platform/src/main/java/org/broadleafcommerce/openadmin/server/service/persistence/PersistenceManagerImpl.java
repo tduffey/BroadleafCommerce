@@ -294,8 +294,6 @@ public class PersistenceManagerImpl implements InspectHelper, PersistenceManager
         adminRemoteSecurityService.securityCheck(persistencePackage.getCeilingEntityFullyQualifiedClassname(), EntityOperationType.FETCH);
         PersistenceModule myModule = getCompatibleModule(persistencePackage.getPersistencePerspective().getOperationTypes().getFetchType());
         DynamicResultSet results = myModule.fetch(persistencePackage, cto);
-        results.setStartIndex(cto.getFirstResult());
-        results.setPageSize(cto.getMaxResults());
 
         return executePostFetchHandlers(persistencePackage, cto, new PersistenceResponse().withDynamicResultSet(results));
     }
@@ -319,6 +317,8 @@ public class PersistenceManagerImpl implements InspectHelper, PersistenceManager
         }
         //support legacy api
         persistenceResponse.setDynamicResultSet(postFetch(persistenceResponse.getDynamicResultSet(), persistencePackage, cto));
+        persistenceResponse.getDynamicResultSet().setStartIndex(cto.getFirstResult());
+        persistenceResponse.getDynamicResultSet().setPageSize(cto.getMaxResults());
 
         return persistenceResponse;
     }
