@@ -473,6 +473,14 @@ public class AdminEntityServiceImpl implements AdminEntityService {
             entity.setType(new String[] { fmd.getTargetClass() });
         }
 
+        ppr.setSectionEntityClassname(mainMetadata.getCeilingType());
+        ppr.setSectionEntityIdValue(getContextSpecificRelationshipId(mainMetadata, parentEntity, ""));
+        String sectionField = "";
+        if (sectionField.contains(".")) {
+            sectionField = sectionField.substring(0, sectionField.lastIndexOf("."));
+        }
+        ppr.setSectionEntityField(sectionField);
+
         Property[] propArr = new Property[properties.size()];
         properties.toArray(propArr);
         ppr.getEntity().setProperties(propArr);

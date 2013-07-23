@@ -41,6 +41,6 @@ public class EqPredicateProvider implements PredicateProvider<Serializable, Seri
         } else {
             path = fieldPathBuilder.getPath(root, fullPropertyName, builder);
         }
-        return builder.equal(path, directValues.get(0));
+        return path.in(directValues);
     }
 }
