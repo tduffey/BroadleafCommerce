@@ -27,6 +27,8 @@ import org.hibernate.annotations.Parameter;
 import org.hibernate.annotations.Table;
 import org.hibernate.annotations.Type;
 
+import java.io.Serializable;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -34,13 +36,12 @@ import javax.persistence.Id;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.Lob;
-import java.io.Serializable;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
 @javax.persistence.Table(name = "BLC_TRANSLATION")
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "blStandardElements")
-@AdminPresentationClass(populateToOneFields = PopulateToOneFieldsEnum.TRUE, friendlyName = "baseProduct")
+@AdminPresentationClass(populateToOneFields = PopulateToOneFieldsEnum.TRUE, friendlyName = "TranslationImpl_friendlyName")
 //multi-column indexes don't appear to get exported correctly when declared at the field level, so declaring here as a workaround
 @Table(appliesTo = "BLC_TRANSLATION", indexes = {
         @Index(name = "TRANSLATION_INDEX", columnNames = {"ENTITY_TYPE","ENTITY_ID","FIELD_NAME","LOCALE_CODE"})
@@ -63,20 +64,25 @@ public class TranslationImpl implements Serializable, Translation {
     protected Long id;
 
     @Column(name = "ENTITY_TYPE")
+    //@AdminPresentation(friendlyName = "TranslationImpl_Entity_Type", order = 1, gridOrder = 1, prominent = true)
     protected String entityType;
 
     @Column(name = "ENTITY_ID")
+    //@AdminPresentation(friendlyName = "TranslationImpl_Entity_ID", order = 2, gridOrder = 2, prominent = true)
     protected String entityId;
 
     @Column(name = "FIELD_NAME")
+    //@AdminPresentation(friendlyName = "TranslationImpl_Field_Name", order = 3, gridOrder = 3, prominent = true)
     protected String fieldName;
 
     @Column(name = "LOCALE_CODE")
+    //@AdminPresentation(friendlyName = "TranslationImpl_Locale_Code", order = 4, gridOrder = 4, prominent = true)
     protected String localeCode;
 
     @Column(name = "TRANSLATED_VALUE", length = Integer.MAX_VALUE - 1)
     @Lob
     @Type(type = "org.hibernate.type.StringClobType")
+    //@AdminPresentation(friendlyName = "TranslationImpl_Translated_Value", order = 5, gridOrder = 5, prominent = true)
     protected String translatedValue;
 
     /* ************************ */
