@@ -18,6 +18,7 @@ package org.broadleafcommerce.core.catalog.dao;
 
 import org.broadleafcommerce.common.persistence.EntityConfiguration;
 import org.broadleafcommerce.common.persistence.Status;
+import org.broadleafcommerce.common.sandbox.SandBoxQueryHints;
 import org.broadleafcommerce.core.catalog.domain.Category;
 import org.broadleafcommerce.core.catalog.domain.CategoryImpl;
 import org.broadleafcommerce.core.catalog.domain.Product;
@@ -148,8 +149,8 @@ public class CategoryDaoImpl implements CategoryDao {
     @Override
     public List<Category> readAllSubCategories(Category category) {
         TypedQuery<Category> query = em.createNamedQuery("BC_READ_ALL_SUBCATEGORIES", Category.class);
-        query.setHint("cloneAwareParameters", "defaultParentCategoryId");
-        query.setHint("cloneAwareTypes", Category.class.getName());
+        query.setHint(SandBoxQueryHints.CLONE_AWARE_PARAMETERS, "defaultParentCategoryId");
+        query.setHint(SandBoxQueryHints.CLONE_AWARE_TYPES, Category.class.getName());
         query.setParameter("defaultParentCategoryId", Arrays.asList(category.getId()));
         query.setHint(QueryHints.HINT_CACHEABLE, true);
         query.setHint(QueryHints.HINT_CACHE_REGION, "query.Catalog");
@@ -160,8 +161,8 @@ public class CategoryDaoImpl implements CategoryDao {
     @Override
     public List<Category> readAllSubCategories(Category category, int limit, int offset) {
         TypedQuery<Category> query = em.createNamedQuery("BC_READ_ALL_SUBCATEGORIES", Category.class);
-        query.setHint("cloneAwareParameters", "defaultParentCategoryId");
-        query.setHint("cloneAwareTypes", Category.class.getName());
+        query.setHint(SandBoxQueryHints.CLONE_AWARE_PARAMETERS, "defaultParentCategoryId");
+        query.setHint(SandBoxQueryHints.CLONE_AWARE_TYPES, Category.class.getName());
         query.setParameter("defaultParentCategoryId", Arrays.asList(category.getId()));
         query.setHint(QueryHints.HINT_CACHEABLE, true);
         query.setHint(QueryHints.HINT_CACHE_REGION, "query.Catalog");
@@ -174,8 +175,8 @@ public class CategoryDaoImpl implements CategoryDao {
     @Override
     public List<Category> readActiveSubCategoriesByCategory(Category category) {
         TypedQuery<Category> query = em.createNamedQuery("BC_READ_ACTIVE_SUBCATEGORIES_BY_CATEGORY", Category.class);
-        query.setHint("cloneAwareParameters", "defaultParentCategoryId");
-        query.setHint("cloneAwareTypes", Category.class.getName());
+        query.setHint(SandBoxQueryHints.CLONE_AWARE_PARAMETERS, "defaultParentCategoryId");
+        query.setHint(SandBoxQueryHints.CLONE_AWARE_TYPES, Category.class.getName());
         query.setParameter("defaultParentCategoryId", Arrays.asList(category.getId()));
         query.setHint(QueryHints.HINT_CACHEABLE, true);
         query.setHint(QueryHints.HINT_CACHE_REGION, "query.Catalog");
@@ -186,8 +187,8 @@ public class CategoryDaoImpl implements CategoryDao {
     @Override
     public List<Category> readActiveSubCategoriesByCategory(Category category, int limit, int offset) {
         TypedQuery<Category> query = em.createNamedQuery("BC_READ_ACTIVE_SUBCATEGORIES_BY_CATEGORY", Category.class);
-        query.setHint("cloneAwareParameters", "defaultParentCategoryId");
-        query.setHint("cloneAwareTypes", Category.class.getName());
+        query.setHint(SandBoxQueryHints.CLONE_AWARE_PARAMETERS, "defaultParentCategoryId");
+        query.setHint(SandBoxQueryHints.CLONE_AWARE_TYPES, Category.class.getName());
         query.setParameter("defaultParentCategoryId", Arrays.asList(category.getId()));
         query.setHint(QueryHints.HINT_CACHEABLE, true);
         query.setHint(QueryHints.HINT_CACHE_REGION, "query.Catalog");

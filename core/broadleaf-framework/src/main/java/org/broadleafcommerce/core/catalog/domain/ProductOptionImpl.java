@@ -19,6 +19,7 @@ package org.broadleafcommerce.core.catalog.domain;
 import org.broadleafcommerce.common.admin.domain.AdminMainEntity;
 import org.broadleafcommerce.common.i18n.service.DynamicTranslationProvider;
 import org.broadleafcommerce.common.presentation.AdminPresentation;
+import org.broadleafcommerce.common.presentation.AdminPresentationAdornedTargetCollection;
 import org.broadleafcommerce.common.presentation.AdminPresentationClass;
 import org.broadleafcommerce.common.presentation.AdminPresentationCollection;
 import org.broadleafcommerce.common.presentation.PopulateToOneFieldsEnum;
@@ -30,10 +31,12 @@ import org.broadleafcommerce.core.catalog.service.type.ProductOptionValidationTy
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Parameter;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import javax.persistence.CascadeType;
@@ -125,11 +128,10 @@ public class ProductOptionImpl implements ProductOption, AdminMainEntity {
     @AdminPresentationCollection(addType = AddMethodType.PERSIST, friendlyName = "ProductOptionImpl_Allowed_Values")
     protected List<ProductOptionValue> allowedValues = new ArrayList<ProductOptionValue>();
 
-    @ManyToMany(fetch = FetchType.LAZY, targetEntity = ProductImpl.class)
-    @JoinTable(name = "BLC_PRODUCT_OPTION_XREF", joinColumns = @JoinColumn(name = "PRODUCT_OPTION_ID", referencedColumnName = "PRODUCT_OPTION_ID"), inverseJoinColumns = @JoinColumn(name = "PRODUCT_ID", referencedColumnName = "PRODUCT_ID"))
+    @OneToMany(targetEntity = ProductOptionXrefImpl.class, mappedBy = "productOption")
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region="blStandardElements")
     @BatchSize(size = 50)
-    protected List<Product> products = new ArrayList<Product>();
+    protected List<ProductOptionXref> products = new ArrayList<ProductOptionXref>();
     
     @Override
     public Long getId() {
@@ -192,13 +194,27 @@ public class ProductOptionImpl implements ProductOption, AdminMainEntity {
     }
 
     @Override
-    public List<Product> getProducts() {
+    public List<ProductOptionXref> getProductXrefs() {
         return products;
     }
 
     @Override
+    public void setProductXrefs(List<ProductOptionXref> xrefs) {
+        this.products = xrefs;
+    }
+
+    @Override
+    public List<Product> getProducts() {
+        List<Product> response = new ArrayList<Product>();
+        for (ProductOptionXref xref : products) {
+            response.add(xref.getProduct());
+        }
+        return Collections.unmodifiableList(response);
+    }
+
+    @Override
     public void setProducts(List<Product> products){
-        this.products = products;
+        throw new UnsupportedOperationException("Use setProductOptionXrefs(..) instead");
     }
 
     @Override
