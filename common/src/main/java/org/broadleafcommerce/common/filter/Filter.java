@@ -37,7 +37,7 @@ public class Filter {
     }
 
     public String getName() {
-        return name;
+        return entityImplementationClassName + "_" + name;
     }
 
     public void setName(String name) {

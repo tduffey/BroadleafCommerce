@@ -20,6 +20,7 @@ import org.apache.commons.lang.StringUtils;
 import org.broadleafcommerce.common.persistence.EntityConfiguration;
 import org.broadleafcommerce.common.persistence.Status;
 import org.broadleafcommerce.common.sandbox.CloneAwareParameterProvider;
+import org.broadleafcommerce.common.sandbox.SandBoxConstants;
 import org.broadleafcommerce.common.time.SystemTime;
 import org.broadleafcommerce.core.catalog.domain.Category;
 import org.broadleafcommerce.core.catalog.domain.CategoryImpl;
@@ -227,6 +228,7 @@ public class ProductDaoImpl implements ProductDao {
         
         TypedQuery<Product> typedQuery = em.createQuery(criteria);
         //don't cache - not really practical for open ended search
+        typedQuery.setHint(SandBoxConstants.QueryHints.FILTER_INCLUDE, ".*CategoryProductXrefImpl");
         
         return typedQuery.getResultList();
     }
