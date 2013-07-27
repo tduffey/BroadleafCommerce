@@ -19,6 +19,7 @@ package org.broadleafcommerce.core.catalog.dao;
 import org.apache.commons.lang.StringUtils;
 import org.broadleafcommerce.common.persistence.EntityConfiguration;
 import org.broadleafcommerce.common.persistence.Status;
+import org.broadleafcommerce.common.sandbox.CloneAwareParameterProvider;
 import org.broadleafcommerce.common.time.SystemTime;
 import org.broadleafcommerce.core.catalog.domain.Category;
 import org.broadleafcommerce.core.catalog.domain.CategoryImpl;
@@ -47,6 +48,7 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map.Entry;
@@ -63,6 +65,9 @@ public class ProductDaoImpl implements ProductDao {
 
     @Resource(name="blEntityConfiguration")
     protected EntityConfiguration entityConfiguration;
+
+    @Resource(name = "blCloneAwareParameterProvider")
+    protected CloneAwareParameterProvider cloneAwareParameterProvider;
 
     protected Long currentDateResolution = 10000L;
     protected Date currentDate = SystemTime.asDate();
@@ -140,7 +145,7 @@ public class ProductDaoImpl implements ProductDao {
     public List<Product> readActiveProductsByCategory(Long categoryId, Date currentDate) {
         Date myDate = getDateFactoringInDateResolution(currentDate);
         TypedQuery<Product> query = em.createNamedQuery("BC_READ_ACTIVE_PRODUCTS_BY_CATEGORY", Product.class);
-        query.setParameter("categoryId", categoryId);
+        query.setParameter("categoryId", cloneAwareParameterProvider.mergeCloneIds(CategoryImpl.class, categoryId));
         query.setParameter("currentDate", myDate);
         query.setHint(QueryHints.HINT_CACHEABLE, true);
         query.setHint(QueryHints.HINT_CACHE_REGION, "query.Catalog");
@@ -207,7 +212,7 @@ public class ProductDaoImpl implements ProductDao {
         
         // We only want results from the determine category
         List<Predicate> restrictions = new ArrayList<Predicate>();
-        restrictions.add(builder.equal(category.get("id"), categoryId));
+        restrictions.add(category.get("id").in(cloneAwareParameterProvider.mergeCloneIds(CategoryImpl.class, categoryId)));
         
         attachProductSearchCriteria(searchCriteria, product, sku, restrictions);
         
@@ -363,7 +368,7 @@ public class ProductDaoImpl implements ProductDao {
     public List<Product> readActiveProductsByCategory(Long categoryId, Date currentDate, int limit, int offset) {
         Date myDate = getDateFactoringInDateResolution(currentDate);
         TypedQuery<Product> query = em.createNamedQuery("BC_READ_ACTIVE_PRODUCTS_BY_CATEGORY", Product.class);
-        query.setParameter("categoryId", categoryId);
+        query.setParameter("categoryId", cloneAwareParameterProvider.mergeCloneIds(CategoryImpl.class, categoryId));
         query.setParameter("currentDate", myDate);
         query.setFirstResult(offset);
         query.setMaxResults(limit);
@@ -376,7 +381,7 @@ public class ProductDaoImpl implements ProductDao {
     @Override
     public List<Product> readProductsByCategory(Long categoryId) {
         TypedQuery<Product> query = em.createNamedQuery("BC_READ_PRODUCTS_BY_CATEGORY", Product.class);
-        query.setParameter("categoryId", categoryId);
+        query.setParameter("categoryId", cloneAwareParameterProvider.mergeCloneIds(CategoryImpl.class, categoryId));
         query.setHint(QueryHints.HINT_CACHEABLE, true);
         query.setHint(QueryHints.HINT_CACHE_REGION, "query.Catalog");
 
@@ -386,7 +391,7 @@ public class ProductDaoImpl implements ProductDao {
     @Override
     public List<Product> readProductsByCategory(Long categoryId, int limit, int offset) {
         TypedQuery<Product> query = em.createNamedQuery("BC_READ_PRODUCTS_BY_CATEGORY", Product.class);
-        query.setParameter("categoryId", categoryId);
+        query.setParameter("categoryId", cloneAwareParameterProvider.mergeCloneIds(CategoryImpl.class, categoryId));
         query.setFirstResult(offset);
         query.setMaxResults(limit);
         query.setHint(QueryHints.HINT_CACHEABLE, true);

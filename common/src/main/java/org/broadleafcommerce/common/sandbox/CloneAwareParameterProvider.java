@@ -16,12 +16,13 @@
 
 package org.broadleafcommerce.common.sandbox;
 
+import java.util.List;
+
 /**
  * @author Jeff Fischer
  */
-public class SandBoxQueryHints {
+public interface CloneAwareParameterProvider {
 
-    public static final String CLONE_AWARE_PARAMETERS = "cloneAwareParameters";
-    public static final String CLONE_AWARE_TYPES = "cloneAwareTypes";
+    public List<Long> mergeCloneIds(Class<?> type, Long... originalIds);
 
 }
