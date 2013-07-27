@@ -23,6 +23,8 @@ import org.broadleafcommerce.common.sandbox.CloneAwareParameterProvider;
 import org.broadleafcommerce.common.time.SystemTime;
 import org.broadleafcommerce.core.catalog.domain.Category;
 import org.broadleafcommerce.core.catalog.domain.CategoryImpl;
+import org.broadleafcommerce.core.catalog.domain.CategoryProductXref;
+import org.broadleafcommerce.core.catalog.domain.CategoryProductXrefImpl;
 import org.broadleafcommerce.core.catalog.domain.Product;
 import org.broadleafcommerce.core.catalog.domain.ProductBundle;
 import org.broadleafcommerce.core.catalog.domain.ProductImpl;
@@ -48,7 +50,6 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map.Entry;
@@ -201,11 +202,12 @@ public class ProductDaoImpl implements ProductDao {
         CriteriaQuery<Product> criteria = builder.createQuery(Product.class);
         
         // The root of our search is Category since we are browsing
-        Root<CategoryImpl> category = criteria.from(CategoryImpl.class);
+        Root<CategoryProductXrefImpl> productXref = criteria.from(CategoryProductXrefImpl.class);
         
         // We want to filter on attributes from product and sku
-        Join<Category, Product> product = category.join("allProducts");
+        Join<CategoryProductXref, Product> product = productXref.join("product");
         Join<Product, Sku> sku = product.join("defaultSku");
+        Join<CategoryProductXref, Category> category = productXref.join("category");
         
         // Product objects are what we want back
         criteria.select(product);
