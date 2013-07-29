@@ -16,20 +16,21 @@
 
 package org.broadleafcommerce.common.sandbox;
 
-import org.springframework.stereotype.Component;
-
-import java.util.Arrays;
+import javax.persistence.EntityManager;
 import java.util.List;
 
 /**
  * @author Jeff Fischer
  */
-@Component("blCloneAwareParameterProvider")
-public class DefaultCloneAwareParameterProvider implements CloneAwareParameterProvider {
+public interface SandBoxHelper {
 
-    @Override
-    public List<Long> mergeCloneIds(Class<?> type, Long... originalIds) {
-        return Arrays.asList(originalIds);
+    public List<Long> mergeCloneIds(EntityManager em, Class<?> type, Long... originalIds);
+
+    public Long getSandBoxVersionId(EntityManager entityManager, Class<?> linkedObjectType, Long requestedParent);
+
+    public static class QueryHints {
+
+        public static final String FILTER_INCLUDE = "filterInclude";
+
     }
-
 }

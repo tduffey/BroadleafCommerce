@@ -19,8 +19,7 @@ package org.broadleafcommerce.core.catalog.dao;
 import org.apache.commons.lang.StringUtils;
 import org.broadleafcommerce.common.persistence.EntityConfiguration;
 import org.broadleafcommerce.common.persistence.Status;
-import org.broadleafcommerce.common.sandbox.CloneAwareParameterProvider;
-import org.broadleafcommerce.common.sandbox.SandBoxConstants;
+import org.broadleafcommerce.common.sandbox.SandBoxHelper;
 import org.broadleafcommerce.common.time.SystemTime;
 import org.broadleafcommerce.core.catalog.domain.Category;
 import org.broadleafcommerce.core.catalog.domain.CategoryImpl;
@@ -68,8 +67,8 @@ public class ProductDaoImpl implements ProductDao {
     @Resource(name="blEntityConfiguration")
     protected EntityConfiguration entityConfiguration;
 
-    @Resource(name = "blCloneAwareParameterProvider")
-    protected CloneAwareParameterProvider cloneAwareParameterProvider;
+    @Resource(name="blSandBoxHelper")
+    protected SandBoxHelper sandBoxHelper;
 
     protected Long currentDateResolution = 10000L;
     protected Date currentDate = SystemTime.asDate();
@@ -147,7 +146,7 @@ public class ProductDaoImpl implements ProductDao {
     public List<Product> readActiveProductsByCategory(Long categoryId, Date currentDate) {
         Date myDate = getDateFactoringInDateResolution(currentDate);
         TypedQuery<Product> query = em.createNamedQuery("BC_READ_ACTIVE_PRODUCTS_BY_CATEGORY", Product.class);
-        query.setParameter("categoryId", cloneAwareParameterProvider.mergeCloneIds(CategoryImpl.class, categoryId));
+        query.setParameter("categoryId", sandBoxHelper.mergeCloneIds(em, CategoryImpl.class, categoryId));
         query.setParameter("currentDate", myDate);
         query.setHint(QueryHints.HINT_CACHEABLE, true);
         query.setHint(QueryHints.HINT_CACHE_REGION, "query.Catalog");
@@ -215,7 +214,7 @@ public class ProductDaoImpl implements ProductDao {
         
         // We only want results from the determine category
         List<Predicate> restrictions = new ArrayList<Predicate>();
-        restrictions.add(category.get("id").in(cloneAwareParameterProvider.mergeCloneIds(CategoryImpl.class, categoryId)));
+        restrictions.add(category.get("id").in(sandBoxHelper.mergeCloneIds(em, CategoryImpl.class, categoryId)));
         
         attachProductSearchCriteria(searchCriteria, product, sku, restrictions);
         
@@ -228,7 +227,7 @@ public class ProductDaoImpl implements ProductDao {
         
         TypedQuery<Product> typedQuery = em.createQuery(criteria);
         //don't cache - not really practical for open ended search
-        typedQuery.setHint(SandBoxConstants.QueryHints.FILTER_INCLUDE, ".*CategoryProductXrefImpl");
+        typedQuery.setHint(SandBoxHelper.QueryHints.FILTER_INCLUDE, ".*CategoryProductXrefImpl");
         
         return typedQuery.getResultList();
     }
@@ -372,7 +371,7 @@ public class ProductDaoImpl implements ProductDao {
     public List<Product> readActiveProductsByCategory(Long categoryId, Date currentDate, int limit, int offset) {
         Date myDate = getDateFactoringInDateResolution(currentDate);
         TypedQuery<Product> query = em.createNamedQuery("BC_READ_ACTIVE_PRODUCTS_BY_CATEGORY", Product.class);
-        query.setParameter("categoryId", cloneAwareParameterProvider.mergeCloneIds(CategoryImpl.class, categoryId));
+        query.setParameter("categoryId", sandBoxHelper.mergeCloneIds(em, CategoryImpl.class, categoryId));
         query.setParameter("currentDate", myDate);
         query.setFirstResult(offset);
         query.setMaxResults(limit);
@@ -385,7 +384,7 @@ public class ProductDaoImpl implements ProductDao {
     @Override
     public List<Product> readProductsByCategory(Long categoryId) {
         TypedQuery<Product> query = em.createNamedQuery("BC_READ_PRODUCTS_BY_CATEGORY", Product.class);
-        query.setParameter("categoryId", cloneAwareParameterProvider.mergeCloneIds(CategoryImpl.class, categoryId));
+        query.setParameter("categoryId", sandBoxHelper.mergeCloneIds(em, CategoryImpl.class, categoryId));
         query.setHint(QueryHints.HINT_CACHEABLE, true);
         query.setHint(QueryHints.HINT_CACHE_REGION, "query.Catalog");
 
@@ -395,7 +394,7 @@ public class ProductDaoImpl implements ProductDao {
     @Override
     public List<Product> readProductsByCategory(Long categoryId, int limit, int offset) {
         TypedQuery<Product> query = em.createNamedQuery("BC_READ_PRODUCTS_BY_CATEGORY", Product.class);
-        query.setParameter("categoryId", cloneAwareParameterProvider.mergeCloneIds(CategoryImpl.class, categoryId));
+        query.setParameter("categoryId", sandBoxHelper.mergeCloneIds(em, CategoryImpl.class, categoryId));
         query.setFirstResult(offset);
         query.setMaxResults(limit);
         query.setHint(QueryHints.HINT_CACHEABLE, true);
