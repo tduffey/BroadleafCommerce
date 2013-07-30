@@ -38,10 +38,10 @@ public interface SandBoxItemDao {
 
     public void delete(SandBoxItem sandBoxItem);
 
-    public List<SandBoxItem> retrieveSandBoxItemsByTypeForSandbox(Long sandBox, SandBoxItemType itemType);
+    //public List<SandBoxItem> retrieveSandBoxItemsByTypeForSandbox(Long sandBox, SandBoxItemType itemType);
 
     public List<SandBoxItem> retrieveByGroupName(Long sandBoxId, String groupName);
 
-    public List<SandBoxItem> retrieveSandBoxItemsByTypesForSandbox(Long sandBox, List<SandBoxItemType> sandBoxItemTypes);
+    //public List<SandBoxItem> retrieveSandBoxItemsByTypesForSandbox(Long sandBox, List<SandBoxItemType> sandBoxItemTypes);
 
 }

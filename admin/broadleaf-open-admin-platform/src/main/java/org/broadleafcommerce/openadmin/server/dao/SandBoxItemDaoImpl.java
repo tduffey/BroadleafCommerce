@@ -122,7 +122,7 @@ public class SandBoxItemDaoImpl implements SandBoxItemDao {
         return query.getResultList();
     }
 
-    @Override
+    /*@Override
     public List<SandBoxItem> retrieveSandBoxItemsByTypeForSandbox(Long sandBox, SandBoxItemType itemType) {
         Query query = em.createNamedQuery("BC_READ_ALL_SANDBOX_ITEMS_BY_TYPE");
         query.setParameter("sandboxId", sandBox);
@@ -136,7 +136,7 @@ public class SandBoxItemDaoImpl implements SandBoxItemDao {
         query.setParameter("sandboxId", sandBox);
         query.setParameter("sandBoxItemTypes", sandBoxItemTypes);
         return query.getResultList();
-    }
+    }*/
 
     @Override
     public void delete(SandBoxItem sandBoxItem) {

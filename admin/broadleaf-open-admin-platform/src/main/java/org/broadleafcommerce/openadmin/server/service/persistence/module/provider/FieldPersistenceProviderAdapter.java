@@ -59,4 +59,9 @@ public class FieldPersistenceProviderAdapter extends AbstractFieldPersistencePro
     public int getOrder() {
         return Ordered.LOWEST_PRECEDENCE;
     }
+
+    protected boolean checkDirtyState(PopulateValueRequest request, Object instance, Object checkValue) throws Exception {
+        return (instance == null && checkValue != null) || (instance != null && checkValue == null) ||
+                !request.getFieldManager().getFieldValue(instance, request.getProperty().getName()).equals(checkValue);
+    }
 }

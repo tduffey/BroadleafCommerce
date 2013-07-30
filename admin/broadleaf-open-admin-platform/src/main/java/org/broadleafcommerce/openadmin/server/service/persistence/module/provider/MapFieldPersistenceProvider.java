@@ -54,6 +54,7 @@ public class MapFieldPersistenceProvider extends BasicFieldPersistenceProvider {
 
     @Override
     public FieldProviderResponse populateValue(PopulateValueRequest populateValueRequest, Serializable instance) {
+        boolean dirty = false;
         try {
             //handle some additional field settings (if applicable)
             Class<?> valueType = null;
@@ -79,6 +80,9 @@ public class MapFieldPersistenceProvider extends BasicFieldPersistenceProvider {
                 if (assignableValue == null) {
                     assignableValue = (ValueAssignable) valueType.newInstance();
                     persistValue = true;
+                    dirty = true;
+                } else {
+                    dirty = assignableValue.getValue().equals(populateValueRequest.getProperty().getValue());
                 }
                 assignableValue.setName(key);
                 assignableValue.setValue(populateValueRequest.getProperty().getValue());
@@ -114,6 +118,7 @@ public class MapFieldPersistenceProvider extends BasicFieldPersistenceProvider {
         } catch (Exception e) {
             throw new PersistenceException(e);
         }
+        populateValueRequest.getProperty().setIsDirty(dirty);
         return FieldProviderResponse.HANDLED;
     }
 
