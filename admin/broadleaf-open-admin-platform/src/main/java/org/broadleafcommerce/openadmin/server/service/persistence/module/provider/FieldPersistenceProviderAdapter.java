@@ -61,7 +61,11 @@ public class FieldPersistenceProviderAdapter extends AbstractFieldPersistencePro
     }
 
     protected boolean checkDirtyState(PopulateValueRequest request, Object instance, Object checkValue) throws Exception {
-        return (instance == null && checkValue != null) || (instance != null && checkValue == null) ||
-                !request.getFieldManager().getFieldValue(instance, request.getProperty().getName()).equals(checkValue);
+        boolean dirty = !(instance == null && checkValue == null) && (instance == null || checkValue == null);
+        if (!dirty) {
+            Object value = request.getFieldManager().getFieldValue(instance, request.getProperty().getName());
+            dirty = value == null || !value.equals(checkValue);
+        }
+        return dirty;
     }
 }

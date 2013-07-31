@@ -64,7 +64,7 @@ import java.util.Map.Entry;
  */
 @Component("blAdornedTargetListPersistenceModule")
 @Scope("prototype")
-public class AdornedTargetListPersistenceModule extends BasicPersistenceModule {
+public class AdornedTargetListPersistenceModule extends BasicPersistenceModule implements AdornedTargetRetrievable {
 
     private static final Log LOG = LogFactory.getLog(AdornedTargetListPersistenceModule.class);
 
@@ -468,6 +468,16 @@ public class AdornedTargetListPersistenceModule extends BasicPersistenceModule {
         DynamicResultSet results = new DynamicResultSet(null, payload, totalRecords);
 
         return results;
+    }
+
+    @Override
+    public AdornedTargetRetrieval getAdornedTargetRetrieval(PersistencePackage persistencePackage, Entity entity, AdornedTargetList adornedTargetList) {
+        return new AdornedTargetRetrieval(persistencePackage, entity, adornedTargetList);
+    }
+
+    @Override
+    public AdornedTargetRetrieval getAdornedTargetRetrieval(PersistencePackage persistencePackage, AdornedTargetList adornedTargetList, CriteriaTransferObject cto) {
+        return new AdornedTargetRetrieval(persistencePackage, adornedTargetList, cto);
     }
 
     public class AdornedTargetRetrieval {

@@ -33,4 +33,10 @@ public interface SandBoxHelper {
         public static final String FILTER_INCLUDE = "filterInclude";
 
     }
+
+    public static class ContextVariables {
+
+        public static final String IGNORE_FILTERS = "ignoreFilters";
+
+    }
 }
