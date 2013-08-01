@@ -35,6 +35,7 @@ public class SandBoxOperationType implements Serializable, BroadleafEnumerationT
     public static final SandBoxOperationType ADD     = new SandBoxOperationType("ADD", "Add");
     public static final SandBoxOperationType UPDATE  = new SandBoxOperationType("UPDATE", "Update");
     public static final SandBoxOperationType DELETE  = new SandBoxOperationType("DELETE", "Delete");
+    public static final SandBoxOperationType REVERT  = new SandBoxOperationType("REVERT", "Revert");
 
     public static SandBoxOperationType getInstance(final String type) {
         return TYPES.get(type);

@@ -28,15 +28,4 @@ public interface SandBoxHelper {
 
     public Long getSandBoxVersionId(EntityManager entityManager, Class<?> linkedObjectType, Long requestedParent);
 
-    public static class QueryHints {
-
-        public static final String FILTER_INCLUDE = "filterInclude";
-
-    }
-
-    public static class ContextVariables {
-
-        public static final String IGNORE_FILTERS = "ignoreFilters";
-
-    }
 }
