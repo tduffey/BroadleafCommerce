@@ -24,6 +24,12 @@ import java.util.List;
  */
 public interface SandBoxHelper {
 
+    public static class QueryHints {
+
+        public static final String FILTER_INCLUDE = "filterInclude";
+
+    }
+
     public List<Long> mergeCloneIds(EntityManager em, Class<?> type, Long... originalIds);
 
     public Long getSandBoxVersionId(EntityManager entityManager, Class<?> linkedObjectType, Long requestedParent);
