@@ -156,6 +156,10 @@
             </map>
         </property>
     </bean>
+    
+    <bean id="blFormBuilderExtensionManager" class="org.broadleafcommerce.openadmin.web.service.FormBuilderExtensionManager">
+        <property name="handlers" ref="blFormBuilderExtensionHandlers" />
+    </bean>
 
     <bean id="blAdditionalSectionAuthorizations" class="org.springframework.beans.factory.config.ListFactoryBean" scope="prototype">
         <property name="sourceList">
@@ -202,6 +206,44 @@
             <list>
             </list>
         </property>
+    </bean>
+
+    <bean id="blFormBuilderExtensionHandlers" class="org.springframework.beans.factory.config.ListFactoryBean" >
+        <property name="sourceList">
+            <list>
+            </list>
+        </property>
+    </bean>
+
+    <bean id="blMainEntityActionsExtensionListeners" class="org.springframework.beans.factory.config.ListFactoryBean" >
+        <property name="sourceList">
+            <list>
+            </list>
+        </property>
+    </bean>
+
+    <bean id="blOpenAdminCssLocations" class="org.springframework.beans.factory.config.ListFactoryBean" >
+        <property name="sourceList">
+            <list>
+                <value>classpath:/open_admin_style/css/</value>
+            </list>
+        </property>
+    </bean>
+    <bean class="org.broadleafcommerce.common.extensibility.context.merge.LateStageMergeBeanPostProcessor">
+        <property name="collectionRef" value="blOpenAdminCssLocations" />
+        <property name="targetRef" value="blCssLocations" />
+    </bean>
+
+    <bean id="blOpenAdminJsLocations" class="org.springframework.beans.factory.config.ListFactoryBean">
+        <property name="sourceList">
+            <list>
+                <value>classpath:/open_admin_style/js/</value>
+            </list>
+        </property>
+    </bean>
+    <bean class="org.broadleafcommerce.common.extensibility.context.merge.LateStageMergeBeanPostProcessor">
+        <property name="collectionRef" value="blOpenAdminJsLocations" />
+        <property name="targetRef" value="blJsLocations" />
     </bean>
 
     <bean id="blRebalanceDialects" class="org.springframework.beans.factory.config.ListFactoryBean">

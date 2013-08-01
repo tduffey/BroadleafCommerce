@@ -18,16 +18,21 @@ package org.broadleafcommerce.core.web.api.endpoint.order;
 
 import org.broadleafcommerce.core.checkout.service.CheckoutService;
 import org.broadleafcommerce.core.order.domain.FulfillmentGroup;
+import org.broadleafcommerce.core.order.domain.FulfillmentOption;
 import org.broadleafcommerce.core.order.domain.Order;
 import org.broadleafcommerce.core.order.domain.OrderItem;
 import org.broadleafcommerce.core.order.service.FulfillmentGroupService;
+import org.broadleafcommerce.core.order.service.FulfillmentOptionService;
 import org.broadleafcommerce.core.order.service.OrderService;
 import org.broadleafcommerce.core.order.service.call.FulfillmentGroupItemRequest;
 import org.broadleafcommerce.core.order.service.call.FulfillmentGroupRequest;
+import org.broadleafcommerce.core.order.service.type.FulfillmentType;
 import org.broadleafcommerce.core.pricing.service.exception.PricingException;
+import org.broadleafcommerce.core.web.api.BroadleafWebServicesException;
 import org.broadleafcommerce.core.web.api.endpoint.BaseEndpoint;
 import org.broadleafcommerce.core.web.api.wrapper.FulfillmentGroupItemWrapper;
 import org.broadleafcommerce.core.web.api.wrapper.FulfillmentGroupWrapper;
+import org.broadleafcommerce.core.web.api.wrapper.FulfillmentOptionWrapper;
 import org.broadleafcommerce.core.web.api.wrapper.OrderWrapper;
 import org.broadleafcommerce.core.web.order.CartState;
 
@@ -36,8 +41,6 @@ import java.util.List;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 /**
@@ -60,6 +63,9 @@ public abstract class FulfillmentEndpoint extends BaseEndpoint {
     @Resource(name="blFulfillmentGroupService")
     protected FulfillmentGroupService fulfillmentGroupService;
 
+    @Resource(name = "blFulfillmentOptionService")
+    protected FulfillmentOptionService fulfillmentOptionService;
+
     public List<FulfillmentGroupWrapper> findFulfillmentGroupsForOrder(HttpServletRequest request) {
         Order cart = CartState.getCart();
         if (cart != null && cart.getFulfillmentGroups() != null && !cart.getFulfillmentGroups().isEmpty()) {
@@ -72,8 +78,8 @@ public abstract class FulfillmentEndpoint extends BaseEndpoint {
             }
             return fulfillmentGroupWrappers;
         }
-        throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND)
-                .type(MediaType.TEXT_PLAIN).entity("Cart could not be found").build());
+        throw BroadleafWebServicesException.build(Response.Status.NOT_FOUND.getStatusCode())
+                .addMessage(BroadleafWebServicesException.CART_NOT_FOUND);
     }
 
     public OrderWrapper removeAllFulfillmentGroupsFromOrder(HttpServletRequest request,
@@ -86,12 +92,12 @@ public abstract class FulfillmentEndpoint extends BaseEndpoint {
                 wrapper.wrapDetails(cart, request);
                 return wrapper;
             } catch (PricingException e) {
-                throw new WebApplicationException(e, Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                        .type(MediaType.TEXT_PLAIN).entity("An error occured pricing the cart.").build());
+                throw BroadleafWebServicesException.build(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), null, null, e)
+                        .addMessage(BroadleafWebServicesException.CART_PRICING_ERROR);
             }
         }
-        throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND)
-                .type(MediaType.TEXT_PLAIN).entity("Cart could not be found").build());
+        throw BroadleafWebServicesException.build(Response.Status.NOT_FOUND.getStatusCode())
+                .addMessage(BroadleafWebServicesException.CART_NOT_FOUND);
 
     }
 
@@ -110,13 +116,13 @@ public abstract class FulfillmentEndpoint extends BaseEndpoint {
                     fulfillmentGroupWrapper.wrapDetails(fulfillmentGroup, request);
                     return fulfillmentGroupWrapper;
                 } catch (PricingException e) {
-                    throw new WebApplicationException(e, Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                            .type(MediaType.TEXT_PLAIN).entity("An error occured pricing the cart.").build());
+                    throw BroadleafWebServicesException.build(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), null, null, e)
+                            .addMessage(BroadleafWebServicesException.CART_PRICING_ERROR);
                 }
             }
         }
-        throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND)
-                .type(MediaType.TEXT_PLAIN).entity("Cart could not be found").build());
+        throw BroadleafWebServicesException.build(Response.Status.NOT_FOUND.getStatusCode())
+                .addMessage(BroadleafWebServicesException.CART_NOT_FOUND);
 
     }
 
@@ -153,14 +159,80 @@ public abstract class FulfillmentEndpoint extends BaseEndpoint {
                         return fulfillmentGroupWrapper;
 
                     } catch (PricingException e) {
-                        throw new WebApplicationException(e, Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                                .type(MediaType.TEXT_PLAIN).entity("An error occured pricing the cart.").build());
+                        throw BroadleafWebServicesException.build(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), null, null, e)
+                                .addMessage(BroadleafWebServicesException.CART_PRICING_ERROR);
                     }
                 }
             }
         }
-        throw new WebApplicationException(Response.status(Response.Status.NOT_FOUND)
-                .type(MediaType.TEXT_PLAIN).entity("Cart could not be found").build());
+        throw BroadleafWebServicesException.build(Response.Status.NOT_FOUND.getStatusCode())
+                .addMessage(BroadleafWebServicesException.CART_NOT_FOUND);
 
+    }
+
+    public FulfillmentGroupWrapper addFulfillmentOptionToFulfillmentGroup(HttpServletRequest request,
+            Long fulfillmentGroupId,
+            Long fulfillmentOptionId,
+            boolean priceOrder) {
+
+        FulfillmentOption option = fulfillmentOptionService.readFulfillmentOptionById(fulfillmentOptionId);
+        if (option == null) {
+            throw BroadleafWebServicesException.build(Response.Status.NOT_FOUND.getStatusCode())
+                    .addMessage(BroadleafWebServicesException.FULFILLMENT_OPTION_NOT_FOUND, fulfillmentOptionId);
+        }
+
+        Order cart = CartState.getCart();
+        if (cart != null) {
+            boolean found = false;
+            List<FulfillmentGroup> groups = cart.getFulfillmentGroups();
+            if (groups != null && !groups.isEmpty()) {
+                for (FulfillmentGroup group : groups) {
+                    if (group.getId().equals(fulfillmentGroupId)) {
+                        group.setFulfillmentOption(option);
+                        found = true;
+                        break;
+                    }
+                }
+            }
+            try {
+                if (found) {
+                    cart = orderService.save(cart, priceOrder);
+                    for (FulfillmentGroup fg : groups) {
+                        if (fg.getId().equals(fulfillmentGroupId)) {
+                            FulfillmentGroupWrapper fulfillmentGroupWrapper = (FulfillmentGroupWrapper) context.getBean(FulfillmentGroupWrapper.class.getName());
+                            fulfillmentGroupWrapper.wrapDetails(fg, request);
+                            return fulfillmentGroupWrapper;
+                        }
+                    }
+                } else {
+                    throw BroadleafWebServicesException.build(Response.Status.NOT_FOUND.getStatusCode())
+                            .addMessage(BroadleafWebServicesException.FULFILLMENT_GROUP_NOT_FOUND, fulfillmentGroupId);
+                }
+            } catch (PricingException e) {
+                throw BroadleafWebServicesException.build(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), null, null, e)
+                        .addMessage(BroadleafWebServicesException.CART_PRICING_ERROR);
+            }
+        }
+        throw BroadleafWebServicesException.build(Response.Status.NOT_FOUND.getStatusCode())
+                .addMessage(BroadleafWebServicesException.CART_NOT_FOUND);
+    }
+
+    public List<FulfillmentOptionWrapper> findFulfillmentOptions(HttpServletRequest request, String fulfillmentType) {
+        ArrayList<FulfillmentOptionWrapper> out = new ArrayList<FulfillmentOptionWrapper>();
+        List<FulfillmentOption> options = null;
+        FulfillmentType type = FulfillmentType.getInstance(fulfillmentType);
+        if (type != null) {
+            options = fulfillmentOptionService.readAllFulfillmentOptionsByFulfillmentType(type);
+        } else {
+            options = fulfillmentOptionService.readAllFulfillmentOptions();
+        }
+        
+        for (FulfillmentOption option : options) {
+            FulfillmentOptionWrapper fulfillmentOptionWrapper = (FulfillmentOptionWrapper) context.getBean(FulfillmentOptionWrapper.class.getName());
+            fulfillmentOptionWrapper.wrapDetails(option, request);
+            out.add(fulfillmentOptionWrapper);
+        }
+        
+        return out;
     }
 }

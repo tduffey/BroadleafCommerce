@@ -44,8 +44,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
-import javax.annotation.Resource;
-import javax.persistence.NoResultException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -53,6 +51,9 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import javax.annotation.Resource;
+import javax.persistence.NoResultException;
 
 /**
  * @author Andre Azzolini (apazzolini)
@@ -107,21 +108,34 @@ public class AdminEntityServiceImpl implements AdminEntityService {
     @Transactional("blTransactionManager")
     public PersistenceResponse updateEntity(EntityForm entityForm, String[] customCriteria)
             throws ServiceException {
-        PersistencePackageRequest ppr = getRequestForEntityForm(entityForm, customCriteria);
 
-        PersistenceResponse response = update(ppr);
-        
         // If the entity form has dynamic forms inside of it, we need to persist those as well.
         // They are typically done in their own custom persistence handlers, which will get triggered
         // based on the criteria specific in the PersistencePackage.
+        Map<String, List<String>> dynamicFormValidationErrors = new HashMap<String, List<String>>();
         for (Entry<String, EntityForm> entry : entityForm.getDynamicForms().entrySet()) {
             DynamicEntityFormInfo info = entityForm.getDynamicFormInfo(entry.getKey());
             
             customCriteria = new String[] { info.getCriteriaName(), entityForm.getId() };
-            ppr = getRequestForEntityForm(entry.getValue(), customCriteria);
-            update(ppr);
+            PersistencePackageRequest ppr = getRequestForEntityForm(entry.getValue(), customCriteria);
+            Entity dynamicFormEntity = update(ppr).getEntity();
+            
+            //if the dynamic form has failed validation, ensure they are properly added to the main entity validation
+            //errors and keyed properly
+            if (dynamicFormEntity.isValidationFailure()) {
+                for (Entry<String, List<String>> error : dynamicFormEntity.getValidationErrors().entrySet()) {
+                    dynamicFormValidationErrors.put(info.getPropertyName() + DynamicEntityFormInfo.FIELD_SEPARATOR + error.getKey(), error.getValue());
+                }
+            }
         }
-        
+
+        PersistencePackageRequest ppr = getRequestForEntityForm(entityForm, customCriteria);
+        //add the validation errors from the dynamic forms prior to invoking update. This way, errors will be
+        //caught downstream and will prevent an actual save
+        ppr.getEntity().getValidationErrors().putAll(dynamicFormValidationErrors);
+        // After the dynamic forms have had a chance to update (and potentially fail validation), update the main entity
+
+        PersistenceResponse response = update(ppr);        
         return response;
     }
 
@@ -147,12 +161,14 @@ public class AdminEntityServiceImpl implements AdminEntityService {
 
     protected PersistencePackageRequest getRequestForEntityForm(EntityForm entityForm, String[] customCriteria) {
         // Ensure the ID property is on the form
-        Field idField = entityForm.findField(entityForm.getIdProperty());
+        Field idField = entityForm.getFields().get(entityForm.getIdProperty());
         if (idField == null) {
             idField = new Field();
             idField.setName(entityForm.getIdProperty());
             idField.setValue(entityForm.getId());
             entityForm.getFields().put(entityForm.getIdProperty(), idField);
+        } else {
+            idField.setValue(entityForm.getId());
         }
         
         List<Property> propList = getPropertiesFromEntityForm(entityForm);

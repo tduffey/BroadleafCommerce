@@ -46,7 +46,7 @@ public class UpdateOrderItemActivity extends BaseActivity<ProcessContext<CartOpe
         }
         
         if (orderItem == null || !order.getOrderItems().contains(orderItem)) {
-            throw new ItemNotFoundException("Order Item (" + orderItem.getId() + ") not found in Order (" + order.getId() + ")");
+            throw new ItemNotFoundException("Order Item (" + orderItemRequestDTO.getOrderItemId() + ") not found in Order (" + order.getId() + ")");
         }
         
         OrderItem itemFromOrder = order.getOrderItems().get(order.getOrderItems().indexOf(orderItem));

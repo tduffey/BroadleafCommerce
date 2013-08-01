@@ -88,6 +88,9 @@ public abstract class AdminAbstractController extends BroadleafAbstractControlle
     @Resource(name="blAdminSecurityRemoteService")
     protected SecurityVerifier adminRemoteSecurityService;
     
+    @Resource(name = "blMainEntityActionsExtensionManager")
+    protected MainEntityActionsExtensionManager mainEntityActionsExtensionManager;
+    
     // *********************************************************
     // UNBOUND CONTROLLER METHODS (USED BY DIFFERENT SECTIONS) *
     // *********************************************************
@@ -202,7 +205,7 @@ public abstract class AdminAbstractController extends BroadleafAbstractControlle
         for (Tab tab : dynamicForm.getTabs()) {
             for (FieldGroup group : tab.getFieldGroups()) {
                 for (Field field : group.getFields()) {
-                    field.setName(info.getPropertyName() + "|" + field.getName());
+                    field.setName(info.getPropertyName() + DynamicEntityFormInfo.FIELD_SEPARATOR + field.getName());
                 }
             }
         }
@@ -243,7 +246,7 @@ public abstract class AdminAbstractController extends BroadleafAbstractControlle
         for (Tab tab : dynamicForm.getTabs()) {
             for (FieldGroup group : tab.getFieldGroups()) {
                 for (Field field : group.getFields()) {
-                    field.setName(info.getPropertyName() + "|" + field.getName());
+                    field.setName(info.getPropertyName() + DynamicEntityFormInfo.FIELD_SEPARATOR + field.getName());
                 }
             }
         }

@@ -63,11 +63,11 @@ import org.broadleafcommerce.openadmin.web.rulebuilder.DataDTODeserializer;
 import org.broadleafcommerce.openadmin.web.rulebuilder.dto.DataDTO;
 import org.broadleafcommerce.openadmin.web.rulebuilder.dto.DataWrapper;
 import org.codehaus.jackson.Version;
+import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.module.SimpleModule;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -75,6 +75,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import javax.annotation.Resource;
 
 /**
  * @author Andre Azzolini (apazzolini)
@@ -90,6 +92,9 @@ public class FormBuilderServiceImpl implements FormBuilderService {
     @Resource (name = "blAdminNavigationService")
     protected AdminNavigationService navigationService;
     
+    @Resource(name = "blFormBuilderExtensionManager")
+    protected FormBuilderExtensionManager extensionManager;
+
     protected static final VisibilityEnum[] FORM_HIDDEN_VISIBILITIES = new VisibilityEnum[] { 
             VisibilityEnum.HIDDEN_ALL, VisibilityEnum.FORM_HIDDEN 
     };
@@ -601,6 +606,7 @@ public class FormBuilderServiceImpl implements FormBuilderService {
         if (json != null && !"".equals(json)) {
             try {
                 ObjectMapper om = new ObjectMapper();
+                om.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
                 return om.readValue(json, MediaDto.class);
             } catch (Exception e) {
                 LOG.warn("Error parsing json to media " + json, e);
@@ -722,12 +728,18 @@ public class FormBuilderServiceImpl implements FormBuilderService {
                 lg.getToolbarActions().add(0, DefaultListGridActions.ADD);
             }
         }
-        
         if (CollectionUtils.isEmpty(ef.getActions())) {
             ef.addAction(DefaultEntityFormActions.SAVE);
         }
         
         ef.addAction(DefaultEntityFormActions.DELETE);
+        addAdditionalEntityFormActions(ef);
+    }
+    
+    protected void addAdditionalEntityFormActions(EntityForm ef) {
+        if (extensionManager != null) {
+            extensionManager.getProxy().addFormExtensions(ef);
+        }
     }
     
     @Override
@@ -737,10 +749,10 @@ public class FormBuilderServiceImpl implements FormBuilderService {
 
     @Override
     public void populateEntityFormFields(EntityForm ef, Entity entity, boolean populateType, boolean populateId) {
-        if (populateType) {
+        if (populateId) {
             ef.setId(entity.findProperty(ef.getIdProperty()).getValue());
         }
-        if (populateId) {
+        if (populateType) {
             ef.setEntityType(entity.getType()[0]);
         }
 

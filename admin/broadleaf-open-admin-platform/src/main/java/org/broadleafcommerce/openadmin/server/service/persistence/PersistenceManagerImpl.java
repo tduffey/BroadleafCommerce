@@ -20,6 +20,7 @@ import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadleafcommerce.common.exception.NoPossibleResultsException;
 import org.broadleafcommerce.common.exception.ServiceException;
 import org.broadleafcommerce.common.money.Money;
 import org.broadleafcommerce.common.presentation.client.OperationType;
@@ -293,9 +294,17 @@ public class PersistenceManagerImpl implements InspectHelper, PersistenceManager
         }
         adminRemoteSecurityService.securityCheck(persistencePackage.getCeilingEntityFullyQualifiedClassname(), EntityOperationType.FETCH);
         PersistenceModule myModule = getCompatibleModule(persistencePackage.getPersistencePerspective().getOperationTypes().getFetchType());
-        DynamicResultSet results = myModule.fetch(persistencePackage, cto);
-
-        return executePostFetchHandlers(persistencePackage, cto, new PersistenceResponse().withDynamicResultSet(results));
+        
+        try {
+            DynamicResultSet results = myModule.fetch(persistencePackage, cto);
+            return executePostFetchHandlers(persistencePackage, cto, new PersistenceResponse().withDynamicResultSet(results));
+        } catch (ServiceException e) {
+            if (e.getCause() instanceof NoPossibleResultsException) {
+                DynamicResultSet drs = new DynamicResultSet(null, new Entity[] {}, 0);
+                return executePostFetchHandlers(persistencePackage, cto, new PersistenceResponse().withDynamicResultSet(drs));
+            }
+            throw e;
+        }
     }
 
     protected PersistenceResponse executePostFetchHandlers(PersistencePackage persistencePackage, CriteriaTransferObject
