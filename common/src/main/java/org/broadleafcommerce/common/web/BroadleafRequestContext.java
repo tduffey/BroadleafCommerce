@@ -29,13 +29,12 @@ import org.springframework.context.MessageSource;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.Currency;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * Convenient holder class for various objects to be automatically available on thread local without invoking the various
@@ -172,6 +171,17 @@ public class BroadleafRequestContext {
 
     public SandBox getSandbox() {
         return sandbox;
+    }
+
+    public Long getSandBoxId() {
+        if (sandbox != null) {
+            return sandbox.getId();
+        }
+        return null;
+    }
+
+    public boolean isProductionSandBox() {
+        return sandbox == null || SandBoxType.PRODUCTION == sandbox.getSandBoxType();
     }
 
     public void setSandbox(SandBox sandbox) {

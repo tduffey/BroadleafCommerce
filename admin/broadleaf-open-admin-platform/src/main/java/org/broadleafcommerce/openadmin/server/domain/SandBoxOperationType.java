@@ -37,6 +37,7 @@ public class SandBoxOperationType implements Serializable, BroadleafEnumerationT
     public static final SandBoxOperationType DELETE  = new SandBoxOperationType("DELETE", "Delete");
     public static final SandBoxOperationType REVERT  = new SandBoxOperationType("REVERT", "Revert");
     public static final SandBoxOperationType REVERT_FOR_PROMOTE = new SandBoxOperationType("REVERT_FOR_PROMOTE", "Revert For Promote");
+    public static final SandBoxOperationType REVERT_FOR_REJECT = new SandBoxOperationType("REVERT_FOR_REJECT", "Revert For Reject");
 
     public static SandBoxOperationType getInstance(final String type) {
         return TYPES.get(type);
