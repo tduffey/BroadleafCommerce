@@ -19,6 +19,7 @@ package org.broadleafcommerce.common.sandbox.domain;
 import org.broadleafcommerce.common.site.domain.Site;
 
 import java.io.Serializable;
+import java.util.List;
 
 public interface SandBox extends Serializable {
 
@@ -49,7 +50,13 @@ public interface SandBox extends Serializable {
 
     public void setAuthor(Long author);
 
-    public SandBox clone();
+    public SandBox getParentSandBox();
+
+    public void setParentSandBox(SandBox parentSandBox);;
+
+    public List<Long> getSandBoxIdsForHierarchy(boolean includeInherited);
+
+    //public SandBox clone();
 }
 
 

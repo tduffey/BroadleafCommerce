@@ -29,8 +29,6 @@ import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Index;
 import org.hibernate.annotations.Parameter;
 
-import java.lang.reflect.Method;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -41,6 +39,9 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -79,6 +80,10 @@ public class SandBoxImpl implements SandBox {
     @Column(name = "SANDBOX_TYPE")
     @AdminPresentation(friendlyName = "SandBoxImpl_SandBox_Type", group = "SandBoxImpl_Description", fieldType= SupportedFieldType.BROADLEAF_ENUMERATION, broadleafEnumeration="org.broadleafcommerce.common.sandbox.domain.SandBoxType")
     protected String sandboxType;
+
+    @ManyToOne(targetEntity = SandBoxImpl.class)
+    @JoinColumn(name = "PARENT_SANDBOX_ID")
+    protected SandBox parentSandBox;
 
     /* (non-Javadoc)
      * @see org.broadleafcommerce.openadmin.domain.SandBox#getId()
@@ -145,6 +150,31 @@ public class SandBoxImpl implements SandBox {
     }
 
     @Override
+    public SandBox getParentSandBox() {
+        return parentSandBox;
+    }
+
+    @Override
+    public void setParentSandBox(SandBox parentSandBox) {
+        this.parentSandBox = parentSandBox;
+    }
+
+    @Override
+    public List<Long> getSandBoxIdsForHierarchy(boolean includeInherited) {
+        List<Long> ids = new ArrayList<Long>();
+        ids.add(this.getId());
+        if (includeInherited) {
+            SandBox current = this;
+            while (current.getParentSandBox() != null) {
+                current = current.getParentSandBox();
+                ids.add(current.getId());
+            }
+            Collections.reverse(ids);
+        }
+        return ids;
+    }
+
+    @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
@@ -181,7 +211,7 @@ public class SandBoxImpl implements SandBox {
         return true;
     }
 
-    public void checkCloneable(SandBox sandBox) throws CloneNotSupportedException, SecurityException, NoSuchMethodException {
+    /*public void checkCloneable(SandBox sandBox) throws CloneNotSupportedException, SecurityException, NoSuchMethodException {
         Method cloneMethod = sandBox.getClass().getMethod("clone", new Class[]{});
         if (cloneMethod.getDeclaringClass().getName().startsWith("org.broadleafcommerce") && !sandBox.getClass().getName().startsWith("org.broadleafcommerce")) {
             //subclass is not implementing the clone method
@@ -212,5 +242,5 @@ public class SandBoxImpl implements SandBox {
         }
 
         return clone;
-    }
+    }*/
 }

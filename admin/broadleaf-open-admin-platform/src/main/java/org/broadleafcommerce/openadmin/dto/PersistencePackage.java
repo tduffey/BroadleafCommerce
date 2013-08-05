@@ -16,6 +16,8 @@
 
 package org.broadleafcommerce.openadmin.dto;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 import java.io.Serializable;
 import java.util.Arrays;
 
@@ -75,6 +77,25 @@ public class PersistencePackage implements Serializable {
     
     public void setCustomCriteria(String[] customCriteria) {
         this.customCriteria = customCriteria;
+    }
+
+    public void addCustomCriteria(String criteria) {
+        customCriteria = ArrayUtils.add(customCriteria, criteria);
+    }
+
+    public void removeCustomCriteria(String criteria) {
+        int pos = containsCriteria(criteria);
+        if (pos >= 0) {
+            customCriteria = ArrayUtils.remove(customCriteria, pos);
+        }
+    }
+
+    public int containsCriteria(String criteria) {
+        if (ArrayUtils.isEmpty(customCriteria)) {
+            return -1;
+        }
+        Arrays.sort(customCriteria);
+        return Arrays.binarySearch(customCriteria, criteria);
     }
     
     public Entity getEntity() {
