@@ -193,7 +193,7 @@ public class BroadleafSandBoxResolverImpl implements BroadleafSandBoxResolver  {
      */
     private void setContentTime(WebRequest request) {
         String sandboxDateTimeParam = request.getParameter(SANDBOX_DATE_TIME_VAR);
-        if (sandBoxPreviewEnabled) {
+        if (!sandBoxPreviewEnabled) {
             sandboxDateTimeParam = null;
         }
         Date overrideTime = null;
