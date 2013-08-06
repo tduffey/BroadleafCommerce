@@ -36,8 +36,10 @@ import org.broadleafcommerce.openadmin.server.domain.PersistencePackageRequest;
 import org.broadleafcommerce.openadmin.server.security.domain.AdminSection;
 import org.broadleafcommerce.openadmin.server.security.remote.EntityOperationType;
 import org.broadleafcommerce.openadmin.server.service.persistence.PersistenceResponse;
+import org.broadleafcommerce.openadmin.server.service.persistence.module.BasicPersistenceModule;
 import org.broadleafcommerce.openadmin.web.controller.AdminAbstractController;
 import org.broadleafcommerce.openadmin.web.editor.NonNullBooleanEditor;
+import org.broadleafcommerce.openadmin.web.form.component.DefaultListGridActions;
 import org.broadleafcommerce.openadmin.web.form.component.ListGrid;
 import org.broadleafcommerce.openadmin.web.form.entity.DefaultEntityFormActions;
 import org.broadleafcommerce.openadmin.web.form.entity.DefaultMainActions;
@@ -732,10 +734,12 @@ public class AdminBasicEntityController extends AdminAbstractController {
                 formService.populateEntityFormFieldValues(collectionMetadata, entity, entityForm);
             }
             
-            if (fmd.getMaintainedAdornedTargetFields().length > 0) {
-                listGrid.setListGridType(ListGrid.Type.ADORNED_WITH_FORM);
-            } else {
-                listGrid.setListGridType(ListGrid.Type.ADORNED);
+            listGrid.setListGridType(ListGrid.Type.ADORNED);
+            for (Entry<String, Field> entry : entityForm.getFields().entrySet()) {
+                if (entry.getValue().getIsVisible()) {
+                    listGrid.setListGridType(ListGrid.Type.ADORNED_WITH_FORM);
+                    break;
+                }
             }
 
             model.addAttribute("listGrid", listGrid);
@@ -890,8 +894,36 @@ public class AdminBasicEntityController extends AdminAbstractController {
                 populateTypeAndId = false;
             }
 
+            ClassMetadata cmd = service.getClassMetadata(ppr);
+            for (String field : fmd.getMaintainedAdornedTargetFields()) {
+                Property p = cmd.getPMap().get(field);
+                if (p != null && p.getMetadata() instanceof AdornedTargetCollectionMetadata) {
+                    // Because we're dealing with a nested adorned target collection, this particular request must act
+                    // directly on the first adorned target collection. Because of this, we need the actual id property
+                    // from the entity that models the adorned target relationship, and not the id of the target object.
+                    Property alternateIdProperty = entity.getPMap().get(BasicPersistenceModule.ALTERNATE_ID_PROPERTY);
+                    DynamicResultSet drs = service.getRecordsForCollection(cmd, entity, p, null, null, null, alternateIdProperty.getValue());
+                    
+                    ListGrid listGrid = formService.buildCollectionListGrid(alternateIdProperty.getValue(), drs, p, ppr.getAdornedList().getAdornedTargetEntityClassname());
+                    listGrid.setListGridType(ListGrid.Type.INLINE);
+                    listGrid.getToolbarActions().add(DefaultListGridActions.ADD);
+                    entityForm.addListGrid(listGrid, EntityForm.DEFAULT_TAB_NAME, EntityForm.DEFAULT_TAB_ORDER);
+                }
+            }
+            
             formService.populateEntityFormFields(entityForm, entity, populateTypeAndId, populateTypeAndId);
             formService.populateAdornedEntityFormFields(entityForm, entity, ppr.getAdornedList());
+            
+            boolean atLeastOneBasicField = false;
+            for (Entry<String, Field> entry : entityForm.getFields().entrySet()) {
+                if (entry.getValue().getIsVisible()) {
+                    atLeastOneBasicField = true;
+                    break;
+                }
+            }
+            if (!atLeastOneBasicField) {
+                entityForm.removeAction(DefaultEntityFormActions.SAVE);
+            }
 
             model.addAttribute("entityForm", entityForm);
             model.addAttribute("viewType", "modal/adornedEditEntity");
