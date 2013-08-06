@@ -16,6 +16,8 @@
 
 package org.broadleafcommerce.common.sandbox.domain;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadleafcommerce.common.presentation.AdminPresentation;
@@ -29,6 +31,11 @@ import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Index;
 import org.hibernate.annotations.Parameter;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -39,9 +46,6 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -85,6 +89,14 @@ public class SandBoxImpl implements SandBox {
     @JoinColumn(name = "PARENT_SANDBOX_ID")
     protected SandBox parentSandBox;
 
+    @Column(name = "COLOR")
+    @AdminPresentation(friendlyName = "SandBoxImpl_Color", group = "SandBoxImpl_Description", fieldType = SupportedFieldType.COLOR)
+    protected String color;
+    
+    @Column(name = "GO_LIVE_DATE")
+    @AdminPresentation(friendlyName = "SandBoxImpl_Go_Live_Date", group = "SandBoxImpl_Description",
+        prominent = true, gridOrder = 5000)
+    protected Date goLiveDate;
     /* (non-Javadoc)
      * @see org.broadleafcommerce.openadmin.domain.SandBox#getId()
      */
@@ -160,6 +172,26 @@ public class SandBoxImpl implements SandBox {
     }
 
     @Override
+    public String getColor() {
+        return color;
+    }
+
+    @Override
+    public void setColor(String color) {
+        this.color = color;
+    }
+    
+    @Override
+    public Date getGoLiveDate() {
+        return goLiveDate;
+    }
+
+    @Override
+    public void setGoLiveDate(Date goLiveDate) {
+        this.goLiveDate = goLiveDate;
+    }
+
+    @Override
     public List<Long> getSandBoxIdsForHierarchy(boolean includeInherited) {
         List<Long> ids = new ArrayList<Long>();
         ids.add(this.getId());
@@ -173,42 +205,31 @@ public class SandBoxImpl implements SandBox {
         }
         return ids;
     }
-
+    
     @Override
     public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((author == null) ? 0 : author.hashCode());
-        result = prime * result + ((id == null) ? 0 : id.hashCode());
-        result = prime * result + ((name == null) ? 0 : name.hashCode());
-        return result;
+        return new HashCodeBuilder(1, 31)
+            .append(author)
+            .append(id)
+            .append(name)
+            .append(color)
+            .append(goLiveDate)
+            .toHashCode();
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        SandBoxImpl other = (SandBoxImpl) obj;
-        if (author == null) {
-            if (other.author != null)
-                return false;
-        } else if (!author.equals(other.author))
-            return false;
-        if (id == null) {
-            if (other.id != null)
-                return false;
-        } else if (!id.equals(other.id))
-            return false;
-        if (name == null) {
-            if (other.name != null)
-                return false;
-        } else if (!name.equals(other.name))
-            return false;
-        return true;
+        if (obj instanceof SandBoxImpl) {
+            SandBoxImpl other = (SandBoxImpl) obj;
+            return new EqualsBuilder()
+                .append(author, other.author)
+                .append(id, other.id)
+                .append(name, other.name)
+                .append(color, other.color)
+                .append(goLiveDate, other.goLiveDate)
+                .build();
+        }
+        return false;
     }
 
     /*public void checkCloneable(SandBox sandBox) throws CloneNotSupportedException, SecurityException, NoSuchMethodException {
@@ -233,6 +254,7 @@ public class SandBoxImpl implements SandBox {
             clone.setName(name);
             clone.setAuthor(author);
             clone.setSandBoxType(getSandBoxType());
+            clone.setColor(getColor());
 
             if (site != null) {
                 clone.setSite(site.clone());

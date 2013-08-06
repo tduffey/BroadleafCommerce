@@ -19,6 +19,7 @@ package org.broadleafcommerce.common.sandbox.domain;
 import org.broadleafcommerce.common.site.domain.Site;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.List;
 
 public interface SandBox extends Serializable {
@@ -52,7 +53,15 @@ public interface SandBox extends Serializable {
 
     public SandBox getParentSandBox();
 
-    public void setParentSandBox(SandBox parentSandBox);;
+    public void setParentSandBox(SandBox parentSandBox);
+
+    public String getColor();
+
+    public void setColor(String color);
+
+    public Date getGoLiveDate();
+
+    public void setGoLiveDate(Date goLiveDate);
 
     public List<Long> getSandBoxIdsForHierarchy(boolean includeInherited);
 

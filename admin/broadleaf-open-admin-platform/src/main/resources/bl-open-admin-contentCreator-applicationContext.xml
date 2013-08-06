@@ -87,6 +87,7 @@
                 <value>classpath:/messages/GeneratedMessagesEntityOpenAdmin</value>
                 <value>classpath:/messages/GeneratedMessagesEntityProfile</value>
                 <value>classpath:/messages/OpenAdminMessages</value>
+                <value>classpath:/messages/SandBoxMessages</value>
             </list>
         </property>
     </bean>
