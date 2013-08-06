@@ -649,6 +649,11 @@ public class AdminBasicEntityController extends AdminAbstractController {
             return buildAddCollectionItemModel(request, response, model, id, collectionField, sectionKey, collectionProperty,
                     md, ppr, entityForm, savedEntity);
         }
+        
+        if (persistenceResponse.getAdditionalData().containsKey("cloneId")) {
+            String cloneId = String.valueOf(persistenceResponse.getAdditionalData().get("cloneId"));
+            return "ajaxredirect:" + request.getContextPath() + "/" + sectionKey + "/" + cloneId + "#" + collectionField;
+        }
 
         // Next, we must get the new list grid that represents this collection
         ListGrid listGrid = getCollectionListGrid(mainMetadata, entity, collectionProperty, null, sectionKey, persistenceResponse);
