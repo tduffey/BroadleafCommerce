@@ -253,7 +253,7 @@ public class AdminEntityServiceImpl implements AdminEntityService {
     }
     
     @Override
-    public DynamicResultSet getRecordsForCollection(ClassMetadata containingClassMetadata, Entity containingEntity,
+    public PersistenceResponse getRecordsForCollection(ClassMetadata containingClassMetadata, Entity containingEntity,
             Property collectionProperty, FilterAndSortCriteria[] fascs, Integer startIndex, Integer maxIndex,
             String idValueOverride) throws ServiceException {
         

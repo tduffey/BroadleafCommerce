@@ -62,14 +62,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * The default implementation of the {@link #BroadleafAdminAbstractEntityController}. This delegates every call to 
@@ -894,7 +895,7 @@ public class AdminBasicEntityController extends AdminAbstractController {
                 populateTypeAndId = false;
             }
 
-            ClassMetadata cmd = service.getClassMetadata(ppr);
+            ClassMetadata cmd = service.getClassMetadata(ppr).getDynamicResultSet().getClassMetaData();
             for (String field : fmd.getMaintainedAdornedTargetFields()) {
                 Property p = cmd.getPMap().get(field);
                 if (p != null && p.getMetadata() instanceof AdornedTargetCollectionMetadata) {
@@ -902,9 +903,11 @@ public class AdminBasicEntityController extends AdminAbstractController {
                     // directly on the first adorned target collection. Because of this, we need the actual id property
                     // from the entity that models the adorned target relationship, and not the id of the target object.
                     Property alternateIdProperty = entity.getPMap().get(BasicPersistenceModule.ALTERNATE_ID_PROPERTY);
-                    DynamicResultSet drs = service.getRecordsForCollection(cmd, entity, p, null, null, null, alternateIdProperty.getValue());
+                    DynamicResultSet drs = service.getRecordsForCollection(cmd, entity, p, null, null, null, 
+                            alternateIdProperty.getValue()).getDynamicResultSet();
                     
-                    ListGrid listGrid = formService.buildCollectionListGrid(alternateIdProperty.getValue(), drs, p, ppr.getAdornedList().getAdornedTargetEntityClassname());
+                    ListGrid listGrid = formService.buildCollectionListGrid(alternateIdProperty.getValue(), drs, p, 
+                            ppr.getAdornedList().getAdornedTargetEntityClassname());
                     listGrid.setListGridType(ListGrid.Type.INLINE);
                     listGrid.getToolbarActions().add(DefaultListGridActions.ADD);
                     entityForm.addListGrid(listGrid, EntityForm.DEFAULT_TAB_NAME, EntityForm.DEFAULT_TAB_ORDER);

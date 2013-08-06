@@ -141,10 +141,10 @@ public interface AdminEntityService {
      * @param startIndex
      * @param maxIndex
      * @param idValueOverride
-     * @return the DynamicResultSet
+     * @return the PersistenceResponse
      * @throws ServiceException
      */
-    public DynamicResultSet getRecordsForCollection(ClassMetadata containingClassMetadata, Entity containingEntity, 
+    public PersistenceResponse getRecordsForCollection(ClassMetadata containingClassMetadata, Entity containingEntity, 
             Property collectionProperty, FilterAndSortCriteria[] fascs, Integer startIndex, Integer maxIndex, 
             String idValueOverride) throws ServiceException;
     /**
