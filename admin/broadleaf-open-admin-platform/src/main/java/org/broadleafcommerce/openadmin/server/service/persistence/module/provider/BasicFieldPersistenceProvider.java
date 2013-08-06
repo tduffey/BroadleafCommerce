@@ -137,10 +137,12 @@ public class BasicFieldPersistenceProvider extends FieldPersistenceProviderAdapt
                     }
                     break;
                 case DATE:
-                    String oldValue = populateValueRequest.getDataFormatProvider().getSimpleDateFormatter().
-                                                format((Date) populateValueRequest.getFieldManager().
-                                                getFieldValue(instance, populateValueRequest.getProperty().getName()));
-                    dirty = !oldValue.equals(populateValueRequest.getRequestedValue());
+                    Date date = (Date) populateValueRequest.getFieldManager().getFieldValue(instance, populateValueRequest.getProperty().getName());
+                    String oldValue = null;
+                    if (date != null) {
+                        oldValue = populateValueRequest.getDataFormatProvider().getSimpleDateFormatter().format(date);
+                    }
+                    dirty = StringUtils.equals(oldValue, populateValueRequest.getRequestedValue());
                     populateValueRequest.getFieldManager().setFieldValue(instance,
                             populateValueRequest.getProperty().getName(), populateValueRequest.getDataFormatProvider().
                             getSimpleDateFormatter().parse(populateValueRequest.getRequestedValue()));
