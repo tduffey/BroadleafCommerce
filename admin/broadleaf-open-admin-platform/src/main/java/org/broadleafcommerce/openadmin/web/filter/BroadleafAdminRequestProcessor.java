@@ -53,6 +53,8 @@ import java.util.TimeZone;
 @Component("blAdminRequestProcessor")
 public class BroadleafAdminRequestProcessor extends AbstractBroadleafWebRequestProcessor {
 
+    public static final String ADMIN_USER_PROPERTY = "adminUser";
+
     protected final Log LOG = LogFactory.getLog(getClass());
 
     @Resource(name = "blSiteResolver")
@@ -100,6 +102,7 @@ public class BroadleafAdminRequestProcessor extends AbstractBroadleafWebRequestP
             SandBox sandBox = sandBoxService.retrieveUserSandBox(null, adminUser);
             request.setAttribute(BroadleafSandBoxResolver.SANDBOX_ID_VAR, sandBox.getId(), WebRequest.SCOPE_GLOBAL_SESSION);
             brc.setSandbox(sandBox);
+            brc.getAdditionalProperties().put(ADMIN_USER_PROPERTY, adminUser);
         }
     }
 
